@@ -1,3 +1,1 @@
-module Spdy
-  # Your code goes here...
-end
+require 'spdy/compressor'

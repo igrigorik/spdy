@@ -14,6 +14,8 @@ Gem::Specification.new do |s|
 
   s.rubyforge_project = "spdy"
 
+  s.add_dependency "bindata"
+  s.add_dependency "ffi-zlib"
   s.add_development_dependency "rspec"
 
   s.files         = `git ls-files`.split("\n")
