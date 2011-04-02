@@ -1,0 +1,3 @@
+module Spdy
+  # Your code goes here...
+end
