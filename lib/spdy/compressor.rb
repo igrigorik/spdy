@@ -1,5 +1,3 @@
-require 'ffi/zlib'
-
 module SPDY
   module Zlib
 
