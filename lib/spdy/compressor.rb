@@ -48,7 +48,7 @@ module SPDY
       out_buf = FFI::MemoryPointer.new(CHUNK)
 
       zstream = FFI::Zlib::Z_stream.new
-      zstream[:avail_in]  = in_buf.size
+      zstream[:avail_in]  = in_buf.size-1
       zstream[:avail_out] = CHUNK
       zstream[:next_in]   = in_buf
       zstream[:next_out]  = out_buf
