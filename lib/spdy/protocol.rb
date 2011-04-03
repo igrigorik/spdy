@@ -49,6 +49,26 @@ module SPDY
           self
         end
 
+        def create(opts = {})
+          self.header.type  = 2
+          self.header.len   = 6
+
+          self.header.flags   = opts[:flags] || 0
+          self.header.stream_id = opts[:stream_id] || 1
+
+          nv = SPDY::Protocol::NV.new
+          opts[:headers].each do |k, v|
+            nv.headers << {:name_len => k.size, :name_data => k, :value_len => v.size, :value_data => v}
+          end
+          nv.pairs = opts[:headers].size
+
+          nv = SPDY::Zlib.deflate(nv.to_binary_s)
+
+          self.header.len = self.header.len.to_i + nv.size
+          self.data = nv
+
+          self
+        end
       end
     end
 

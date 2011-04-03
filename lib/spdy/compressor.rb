@@ -53,7 +53,7 @@ module SPDY
       zstream[:next_in]   = in_buf
       zstream[:next_out]  = out_buf
 
-      result = FFI::Zlib.deflateInit(zstream, 9)
+      result = FFI::Zlib.deflateInit(zstream, -1)
       raise "invalid stream" if result != FFI::Zlib::Z_OK
 
       result = FFI::Zlib.deflateSetDictionary(zstream, DICT, DICT.size)

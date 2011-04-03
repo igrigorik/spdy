@@ -49,27 +49,19 @@ describe SPDY::Parser do
   end
 
   context "SYN_REPLY" do
-    xit "should create a SYN_REPLY packet" do
+    it "should create a SYN_REPLY packet" do
       sr = SPDY::Protocol::Control::SynReply.new
-      sr.header.type = 2
-      sr.header.flags = 0
-      sr.header.len  = 6
-      sr.header.stream_id = 1
 
-      nv = SPDY::Protocol::NV.new
-      nv.pairs = 2
-      nv.headers[0].assign(:name_len => 'status'.size, :name_data => 'status', :value_len => '201'.size, :value_data => '201')
-      nv.headers[1].assign(:name_len => 'version'.size, :name_data => 'version', :value_len => 'HTTP/1.1'.size, :value_data => 'HTTP/1.1')
+      headers = {'Content-Type' => 'text/plain', 'status' => '200', 'version' => 'HTTP/1.1'}
+      sr.create(:stream_id => 1, :headers => headers)
 
-      nv = SPDY::Zlib.deflate(nv.to_binary_s)
-      p [:nv_compressed, nv, nv.size]
+      sr.header.version.should == 2
+      sr.header.stream_id.should == 1
 
-      sr.header.len  = sr.header.len.to_i + (nv.size)
-      sr.data = nv
+      sr.header.len.should > 50
+      sr.data.should_not be_nil
 
-      p sr
-      p sr.to_binary_s
-
+      # sr.to_binary_s.should == SYN_REPLY
     end
 
     it "should parse SYN_REPLY packet" do
@@ -79,6 +71,8 @@ describe SPDY::Parser do
       sr.header.type.should == 2
       sr.uncompressed_data.to_h.class.should == Hash
       sr.uncompressed_data.to_h['status'].should == '200 OK'
+
+      sr.to_binary_s.should == SYN_REPLY
     end
   end
 
