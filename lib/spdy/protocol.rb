@@ -1,5 +1,9 @@
 module SPDY
   module Protocol
+
+    CONTROL_BIT = 1
+    DATA_BIT    = 0
+
     module Control
       class Header < BinData::Record
         hide :u1
@@ -42,7 +46,7 @@ module SPDY
 
       def to_h
         headers.inject({}) do |h, v|
-          h[v.name_data] = v.value_data
+          h[v.name_data.to_s] = v.value_data.to_s
           h
         end
       end

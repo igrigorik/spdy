@@ -27,11 +27,24 @@ describe SPDY::Parser do
     lambda { s << 'data' }.should_not raise_error
   end
 
-  it "should parse SYN_STREAM packet" do
-    fired = false
-    s.on_headers_complete { fired = true }
-    s << SYN_STREAM
+  context "SYN_STREAM" do
+    it "should parse SYN_STREAM packet" do
+      fired = false
+      s.on_headers_complete { fired = true }
+      s << SYN_STREAM
 
-    fired.should be_true
+      fired.should be_true
+    end
+
+    it "should return parsed headers" do
+      headers = nil
+      s.on_headers_complete { |h| headers = h }
+      s << SYN_STREAM
+
+      headers.class.should == Hash
+      headers['version'].should == "HTTP/1.1"
+      headers['x-spdy-version'].should == 2
+      headers['x-spdy-stream_id'].should == 1
+    end
   end
 end

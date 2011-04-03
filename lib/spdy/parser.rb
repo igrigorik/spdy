@@ -1,10 +1,6 @@
 module SPDY
-
   class Parser
     include Protocol
-
-    CONTROL_BIT = 1
-    DATA_BIT    = 0
 
     def initialize
       @buffer = ''
@@ -28,30 +24,33 @@ module SPDY
       @on_message_complete = blk
     end
 
-    def try_parse
-      type = @buffer[0,1].unpack('C').first >> 7 & 0x01
+    private
 
-      if type == CONTROL_BIT
-        ch = Control::Header.new.read(@buffer[0,12])
+      def try_parse
+        type = @buffer[0,1].unpack('C').first >> 7 & 0x01
 
-        if ch.type == 1 # SYN_STREAM
-          sc = Control::SynStream.new
-          sc.read(@buffer)
+        if type == CONTROL_BIT
+          ch = Control::Header.new.read(@buffer[0,12])
 
-          data = Zlib.inflate(sc.data.to_s)
-          nv = NV.new.read(data).to_h
+          if ch.type == 1 # SYN_STREAM
+            sc = Control::SynStream.new
+            sc.read(@buffer)
 
-          nv['x-spdy-version']    = ch.version
-          nv['x-spdy-stream_id']  = ch.stream_id
+            data = Zlib.inflate(sc.data.to_s)
+            nv = NV.new.read(data).to_h
 
-          @on_headers_complete.call(nv) if @on_headers_complete
+            nv['x-spdy-version']    = ch.version
+            nv['x-spdy-stream_id']  = ch.stream_id
 
-        elsif c.type == 2 # SYN_REPLY
-        else
-          raise 'invalid control frame'
+            @on_headers_complete.call(nv) if @on_headers_complete
+
+          elsif c.type == 2 # SYN_REPLY
+            raise 'SYN_REPLY not handled yet'
+          else
+            raise 'invalid control frame'
+          end
+
         end
-
       end
-    end
   end
 end
