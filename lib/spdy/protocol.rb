@@ -6,10 +6,10 @@ module SPDY
 
     module Control
       class Header < BinData::Record
-        hide :u1
+        hide :u1, :u2
 
-        bit1 :frame
-        bit15 :version
+        bit1 :frame, :initial_value => 1
+        bit15 :version, :initial_value => 2
         bit16 :type
 
         bit8 :flags
@@ -17,20 +17,26 @@ module SPDY
 
         bit1 :u1
         bit31 :stream_id
+
+        bit1  :u2
+        bit31 :associated_to_stream_id
       end
 
       class SynStream < BinData::Record
-        hide :u1, :u2
+        hide :u1
 
         header :header
 
-        bit1  :u1
-        bit31 :associated_to_stream_id
-
         bit2  :pri
-        bit14 :u2
+        bit14 :u1
 
         string :data, :read_length => lambda { header.len - 10 }
+      end
+
+      class SynReply < BinData::Record
+        header :header
+        bit16 :unused
+        string :data
       end
     end
 

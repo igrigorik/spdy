@@ -47,4 +47,32 @@ describe SPDY::Parser do
       headers['x-spdy-stream_id'].should == 1
     end
   end
+
+  context "SYN_REPLY" do
+    it "should create a SYN_REPLY packet" do
+      sr = SPDY::Protocol::Control::SynReply.new
+      sr.header.type = 2
+      sr.header.len  = 6
+      sr.header.stream_id = 1
+
+      nv = SPDY::Protocol::NV.new
+      nv.pairs = 2
+      nv.headers[0].assign(:name_len => 'status'.size, :name_data => 'status', :value_len => '200'.size, :value_data => '200')
+      nv.headers[1].assign(:name_len => 'version'.size, :name_data => 'version', :value_len => 'HTTP/1.1'.size, :value_data => 'HTTP/1.1')
+
+      p sr
+      nv = SPDY::Zlib.deflate(nv.to_binary_s)
+      p [:nv_compressed, nv, nv.size]
+
+      sr.header.len  = sr.header.len.to_i + (nv.size*4)
+      sr.data = nv
+      p [sr.to_binary_s]
+
+      p sr.to_binary_s << nv
+    end
+  end
+
+  context "RST_STREAM" do
+    it "should parse reset packet"
+  end
 end

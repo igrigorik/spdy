@@ -42,5 +42,27 @@ module SPDY
 
       out_buf.get_bytes(0, zstream[:total_out])
     end
+
+    def self.deflate(data)
+      in_buf  = FFI::MemoryPointer.from_string(data)
+      out_buf = FFI::MemoryPointer.new(CHUNK)
+
+      zstream = FFI::Zlib::Z_stream.new
+      zstream[:avail_in]  = in_buf.size
+      zstream[:avail_out] = CHUNK
+      zstream[:next_in]   = in_buf
+      zstream[:next_out]  = out_buf
+
+      result = FFI::Zlib.deflateInit(zstream, 9)
+      raise "invalid stream" if result != FFI::Zlib::Z_OK
+
+      result = FFI::Zlib.deflateSetDictionary(zstream, DICT, DICT.size)
+      raise "invalid dictionary" if result != FFI::Zlib::Z_OK
+
+      result = FFI::Zlib.deflate(zstream, FFI::Zlib::Z_SYNC_FLUSH)
+      raise "cannot deflate" if result != FFI::Zlib::Z_OK
+
+      out_buf.get_bytes(0, zstream[:total_out])
+    end
   end
 end
