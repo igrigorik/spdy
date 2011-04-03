@@ -1,9 +1,8 @@
-
 module SPDY
 
   module Control
     class Header < BinData::Record
-      hide :unused
+      hide :u1
 
       bit1 :frame
       bit15 :version
@@ -12,15 +11,40 @@ module SPDY
       bit8 :flags
       bit24 :len
 
-      bit1 :unused
+      bit1 :u1
       bit31 :stream_id
     end
 
-    class Stream < BinData::Record
-      hide :unused
+    class SynStream < BinData::Record
+      hide :u1, :u2
 
-      bit1 :unused2
+      header :header
+
+      bit1  :u1
       bit31 :associated_to_stream_id
+
+      bit2  :pri
+      bit14 :u2
+
+      string :data, :read_length => lambda { header.len - 10 }
+    end
+  end
+
+  class NV < BinData::Record
+    bit16 :pairs
+    array :headers, :initial_length => :pairs do
+      bit16 :name_len
+      string :name_data, :read_length => :name_len
+
+      bit16 :value_len
+      string :value_data, :read_length => :value_len
+    end
+
+    def to_h
+      headers.inject({}) do |h, v|
+        h[v.name_data] = v.value_data
+        h
+      end
     end
   end
 
@@ -61,16 +85,18 @@ module SPDY
       sp = Packet.new
 
       if type == CONTROL_BIT
-        c = Control::Header.new
-        c.read(@buffer[0,12])
-        sp.header = c
-        p sp
+        sc = Control::SynStream.new
+        sc.read(@buffer)
 
-        if c.type == 1 # SYN_STREAM
-          s = Control::Stream.new
-          s.read(@buffer[12,4])
+        if sc.header.type == 1 # SYN_STREAM
+          data = Zlib.inflate(sc.data.to_s)
+          nv = NV.new
+          nv.read(data)
 
-          sp.associated_to_stream_id = s.associated_to_stream_id
+          p nv.to_h
+
+          @on_headers_complete.call(nv.to_h) if @on_headers_complete
+
 
         elsif c.type == 2 # SYN_REPLY
         else

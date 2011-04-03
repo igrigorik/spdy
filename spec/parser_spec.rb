@@ -28,7 +28,10 @@ describe SPDY::Parser do
   end
 
   it "should parse SYN_STREAM packet" do
+    fired = false
+    s.on_headers_complete { fired = true }
     s << SYN_STREAM
-  end
 
+    fired.should be_true
+  end
 end
