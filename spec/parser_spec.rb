@@ -48,11 +48,25 @@ describe SPDY::Parser do
     end
   end
 
+  context "NV" do
+    it "should create an NV packet" do
+      nv = SPDY::Protocol::NV.new
+      headers = {'Content-Type' => 'text/plain', 'status' => '200 OK', 'version' => 'HTTP/1.1'}
+
+      headers.each do |k, v|
+        nv.headers << {:name_len => k.size, :name_data => k, :value_len => v.size, :value_data => v}
+      end
+
+      nv.pairs = headers.size
+      nv.to_binary_s.should == NV
+    end
+  end
+
   context "SYN_REPLY" do
     it "should create a SYN_REPLY packet" do
       sr = SPDY::Protocol::Control::SynReply.new
 
-      headers = {'Content-Type' => 'text/plain', 'status' => '200', 'version' => 'HTTP/1.1'}
+      headers = {'Content-Type' => 'text/plain', 'status' => '200 OK', 'version' => 'HTTP/1.1'}
       sr.create(:stream_id => 1, :headers => headers)
 
       sr.header.version.should == 2
@@ -61,7 +75,7 @@ describe SPDY::Parser do
       sr.header.len.should > 50
       sr.data.should_not be_nil
 
-      # sr.to_binary_s.should == SYN_REPLY
+      sr.to_binary_s.should == SYN_REPLY
     end
 
     it "should parse SYN_REPLY packet" do
