@@ -3,13 +3,14 @@ module SPDY
 
     CONTROL_BIT = 1
     DATA_BIT    = 0
+    VERSION     = 2
 
     module Control
       class Header < BinData::Record
-        hide :u1, :u2
+        hide :u1
 
-        bit1 :frame, :initial_value => 1
-        bit15 :version, :initial_value => 2
+        bit1 :frame, :initial_value => CONTROL_BIT
+        bit15 :version, :initial_value => VERSION
         bit16 :type
 
         bit8 :flags
@@ -17,25 +18,48 @@ module SPDY
 
         bit1 :u1
         bit31 :stream_id
-
-        bit1  :u2
-        bit31 :associated_to_stream_id
       end
 
       class SynStream < BinData::Record
-        hide :u1
+        hide :u1, :u2
 
         header :header
 
+        bit1  :u1
+        bit31 :associated_to_stream_id
+
         bit2  :pri
-        bit14 :u1
+        bit14 :u2
 
         string :data, :read_length => lambda { header.len - 10 }
       end
 
       class SynReply < BinData::Record
+        attr_accessor :uncompressed_data
+
         header :header
         bit16 :unused
+        string :data, :read_length => lambda { header.len - 6 }
+
+        def parse(chunk)
+          self.read(chunk)
+
+          data = Zlib.inflate(self.data.to_s)
+          self.uncompressed_data = NV.new.read(data)
+          self
+        end
+
+      end
+    end
+
+    module Data
+      class Frame < BinData::Record
+        bit1 :frame, :initial_value => DATA_BIT
+        bit31 :stream_id
+
+        bit8 :flags
+        bit24 :len
+
         string :data
       end
     end

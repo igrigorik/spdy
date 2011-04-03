@@ -30,7 +30,7 @@ module SPDY
         type = @buffer[0,1].unpack('C').first >> 7 & 0x01
 
         if type == CONTROL_BIT
-          ch = Control::Header.new.read(@buffer[0,16])
+          ch = Control::Header.new.read(@buffer[0,12])
 
           if ch.type == 1 # SYN_STREAM
             sc = Control::SynStream.new
