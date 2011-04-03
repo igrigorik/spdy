@@ -77,21 +77,24 @@ describe SPDY::Parser do
   end
 
   context "DATA" do
-    xit "should create a data frame" do
-      data = "Hello SPDY!"
+    it "should create a data frame" do
+      data = "This is SPDY."
 
       d = SPDY::Protocol::Data::Frame.new
-      d.stream_id = 1
-      d.flags = 0x01
-      d.len = data.size
-      d.data = data
+      d.create(:stream_id => 1, :data => data)
 
-      p d
-      p d.to_binary_s
+      d.to_binary_s.should == DATA
+    end
+
+    it "should create a FIN data frame" do
+      d = SPDY::Protocol::Data::Frame.new
+      d.create(:stream_id => 1, :flags => 1)
+
+      d.to_binary_s.should == DATA_FIN
     end
   end
 
-  context "RST_STREAM" do
-    it "should parse reset packet"
-  end
+  # context "RST_STREAM" do
+  #   it "should parse reset packet"
+  # end
 end

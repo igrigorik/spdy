@@ -54,7 +54,7 @@ module SPDY
           self.header.len   = 6
 
           self.header.flags   = opts[:flags] || 0
-          self.header.stream_id = opts[:stream_id] || 1
+          self.header.stream_id = opts[:stream_id]
 
           nv = SPDY::Protocol::NV.new
           opts[:headers].each do |k, v|
@@ -77,10 +77,22 @@ module SPDY
         bit1 :frame, :initial_value => DATA_BIT
         bit31 :stream_id
 
-        bit8 :flags
-        bit24 :len
+        bit8 :flags, :initial_value => 0
+        bit24 :len,  :initial_value => 0
 
         string :data
+
+        def create(opts = {})
+          self.stream_id = opts[:stream_id]
+          self.flags     = opts[:flags] if opts[:flags]
+
+          if opts[:data]
+            self.len       = opts[:data].size
+            self.data      = opts[:data]
+          end
+
+          self
+        end
       end
     end
 
