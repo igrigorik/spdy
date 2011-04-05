@@ -44,12 +44,14 @@ module SPDY
                 if sc.data.size > 0
                   data = Zlib.inflate(sc.data.to_s)
                   headers = NV.new.read(data).to_h
-
-                  headers['x-spdy-version']    = ch.version
-                  headers['x-spdy-stream_id']  = ch.stream_id
                 end
 
-                @on_headers_complete.call(headers) if @on_headers_complete
+                if @on_headers_complete
+                  @on_headers_complete.call(sc.header.stream_id.to_i,
+                                            sc.associated_to_stream_id.to_i,
+                                            sc.pri.to_i,
+                                            headers)
+                end
 
               when 2 then # SYN_REPLY
                 raise 'SYN_REPLY not handled yet'

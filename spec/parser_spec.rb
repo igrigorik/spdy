@@ -37,14 +37,19 @@ describe SPDY::Parser do
     end
 
     it "should return parsed headers" do
-      headers = nil
-      s.on_headers_complete { |h| headers = h }
+      sid, asid, pri, headers = nil
+      s.on_headers_complete do |stream, astream, priority, head|
+        sid = stream; asid = astream; pri = priority; headers = head
+      end
+
       s << SYN_STREAM
+
+      sid.should == 1
+      asid.should == 0
+      pri.should == 0
 
       headers.class.should == Hash
       headers['version'].should == "HTTP/1.1"
-      headers['x-spdy-version'].should == 2
-      headers['x-spdy-stream_id'].should == 1
     end
   end
 
