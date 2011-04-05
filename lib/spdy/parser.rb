@@ -32,25 +32,32 @@ module SPDY
         case type
           when CONTROL_BIT
             ch = Control::Header.new.read(@buffer[0,12])
+            flags = nil
 
             case ch.type.to_i
               when 1 then # SYN_STREAM
                 sc = Control::SynStream.new
                 sc.read(@buffer)
+                flags = sc.header.flags
 
-                data = Zlib.inflate(sc.data.to_s)
-                nv = NV.new.read(data).to_h
+                headers = {}
+                if sc.data.size > 0
+                  data = Zlib.inflate(sc.data.to_s)
+                  headers = NV.new.read(data).to_h
 
-                nv['x-spdy-version']    = ch.version
-                nv['x-spdy-stream_id']  = ch.stream_id
+                  headers['x-spdy-version']    = ch.version
+                  headers['x-spdy-stream_id']  = ch.stream_id
+                end
 
-                @on_headers_complete.call(nv) if @on_headers_complete
+                @on_headers_complete.call(headers) if @on_headers_complete
 
               when 2 then # SYN_REPLY
                 raise 'SYN_REPLY not handled yet'
               else
                 raise 'invalid control frame'
             end
+
+            @on_message_complete.call if @on_message_complete && flags && fin?(flags)
 
           when DATA_BIT
             dp = Data::Frame.new.read(@buffer)
@@ -60,5 +67,12 @@ module SPDY
             raise 'uknown packet type'
         end
       end
+
+    private
+
+      def fin?(flags)
+        flags == 1
+      end
+
   end
 end

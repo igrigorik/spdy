@@ -59,4 +59,23 @@ describe SPDY::Parser do
     end
   end
 
+  context "FIN" do
+    it "should invoke message_complete on FIN flag in CONTROL packet" do
+      f1, f2 = false
+      s.on_headers_complete { f1 = true }
+      s.on_message_complete { f2 = true }
+
+      sr = SPDY::Protocol::Control::SynStream.new
+      sr.header.type  = 1
+      sr.header.flags = 0x01
+      sr.header.len = 10
+
+      s << sr.to_binary_s
+
+      f1.should be_true
+      f2.should be_true
+    end
+
+  end
+
 end
