@@ -29,27 +29,35 @@ module SPDY
       def try_parse
         type = @buffer[0,1].unpack('C').first >> 7 & 0x01
 
-        if type == CONTROL_BIT
-          ch = Control::Header.new.read(@buffer[0,12])
+        case type
+          when CONTROL_BIT
+            ch = Control::Header.new.read(@buffer[0,12])
 
-          if ch.type == 1 # SYN_STREAM
-            sc = Control::SynStream.new
-            sc.read(@buffer)
+            case ch.type.to_i
+              when 1 then # SYN_STREAM
+                sc = Control::SynStream.new
+                sc.read(@buffer)
 
-            data = Zlib.inflate(sc.data.to_s)
-            nv = NV.new.read(data).to_h
+                data = Zlib.inflate(sc.data.to_s)
+                nv = NV.new.read(data).to_h
 
-            nv['x-spdy-version']    = ch.version
-            nv['x-spdy-stream_id']  = ch.stream_id
+                nv['x-spdy-version']    = ch.version
+                nv['x-spdy-stream_id']  = ch.stream_id
 
-            @on_headers_complete.call(nv) if @on_headers_complete
+                @on_headers_complete.call(nv) if @on_headers_complete
 
-          elsif c.type == 2 # SYN_REPLY
-            raise 'SYN_REPLY not handled yet'
+              when 2 then # SYN_REPLY
+                raise 'SYN_REPLY not handled yet'
+              else
+                raise 'invalid control frame'
+            end
+
+          when DATA_BIT
+            dp = Data::Frame.new.read(@buffer)
+            @on_body.call(dp.stream_id, dp.data) if @on_body
+
           else
-            raise 'invalid control frame'
-          end
-
+            raise 'uknown packet type'
         end
       end
   end

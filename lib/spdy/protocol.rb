@@ -76,7 +76,7 @@ module SPDY
         bit8 :flags, :initial_value => 0
         bit24 :len,  :initial_value => 0
 
-        string :data
+        string :data, :read_length => :len
 
         def create(opts = {})
           self.stream_id = opts[:stream_id]

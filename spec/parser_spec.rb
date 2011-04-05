@@ -23,11 +23,11 @@ describe SPDY::Parser do
     end
   end
 
-  it "should accept incoming data" do
+  xit "should accept incoming data" do
     lambda { s << 'data' }.should_not raise_error
   end
 
-  context "SYN_STREAM" do
+  context "CONTROL" do
     it "should parse SYN_STREAM packet" do
       fired = false
       s.on_headers_complete { fired = true }
@@ -45,6 +45,17 @@ describe SPDY::Parser do
       headers['version'].should == "HTTP/1.1"
       headers['x-spdy-version'].should == 2
       headers['x-spdy-stream_id'].should == 1
+    end
+  end
+
+  context "DATA" do
+    it "should parse data packet" do
+      stream, data = nil
+      s.on_body { |stream_id, d| stream, data = stream_id, d }
+      s << DATA
+
+      stream.should == 1
+      data.should == 'This is SPDY.'
     end
   end
 
