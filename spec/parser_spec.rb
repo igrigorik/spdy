@@ -76,6 +76,17 @@ describe SPDY::Parser do
       f2.should be_true
     end
 
+    it "should invoke message_complete on FIN flag in DATA packet" do
+      f1, f2 = false
+      s.on_body { f1 = true }
+      s.on_message_complete { f2 = true }
+
+      s << DATA_FIN
+
+      f1.should be_true
+      f2.should be_true
+    end
+
   end
 
 end

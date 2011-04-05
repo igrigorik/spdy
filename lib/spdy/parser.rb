@@ -62,6 +62,7 @@ module SPDY
           when DATA_BIT
             dp = Data::Frame.new.read(@buffer)
             @on_body.call(dp.stream_id, dp.data) if @on_body
+            @on_message_complete.call if @on_message_complete && fin?(dp.flags)
 
           else
             raise 'uknown packet type'
