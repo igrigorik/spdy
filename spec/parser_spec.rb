@@ -68,9 +68,10 @@ describe SPDY::Parser do
     it "should invoke message_complete on FIN flag in CONTROL packet" do
       f1, f2 = false
       s.on_headers_complete { f1 = true }
-      s.on_message_complete { f2 = true }
+      s.on_message_complete { |s| f2 = s }
 
       sr = SPDY::Protocol::Control::SynStream.new
+      sr.header.stream_id = 3
       sr.header.type  = 1
       sr.header.flags = 0x01
       sr.header.len = 10
@@ -78,18 +79,18 @@ describe SPDY::Parser do
       s << sr.to_binary_s
 
       f1.should be_true
-      f2.should be_true
+      f2.should == 3
     end
 
     it "should invoke message_complete on FIN flag in DATA packet" do
       f1, f2 = false
       s.on_body { f1 = true }
-      s.on_message_complete { f2 = true }
+      s.on_message_complete { |s| f2 = s }
 
       s << DATA_FIN
 
       f1.should be_true
-      f2.should be_true
+      f2.should == 1
     end
 
   end

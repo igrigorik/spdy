@@ -32,13 +32,12 @@ module SPDY
         case type
           when CONTROL_BIT
             ch = Control::Header.new.read(@buffer[0,12])
-            flags = nil
 
             case ch.type.to_i
               when 1 then # SYN_STREAM
                 sc = Control::SynStream.new
                 sc.read(@buffer)
-                flags = sc.header.flags
+                ch = sc.header
 
                 headers = {}
                 if sc.data.size > 0
@@ -59,12 +58,12 @@ module SPDY
                 raise 'invalid control frame'
             end
 
-            @on_message_complete.call if @on_message_complete && flags && fin?(flags)
+            @on_message_complete.call(ch.stream_id) if @on_message_complete && fin?(ch)
 
           when DATA_BIT
             dp = Data::Frame.new.read(@buffer)
             @on_body.call(dp.stream_id, dp.data) if @on_body
-            @on_message_complete.call if @on_message_complete && fin?(dp.flags)
+            @on_message_complete.call(dp.stream_id) if @on_message_complete && fin?(dp)
 
           else
             raise 'uknown packet type'
@@ -73,8 +72,8 @@ module SPDY
 
     private
 
-      def fin?(flags)
-        flags == 1
+      def fin?(packet)
+        (packet.flags == 1) rescue false
       end
 
   end
