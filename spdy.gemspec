@@ -8,8 +8,8 @@ Gem::Specification.new do |s|
   s.platform    = Gem::Platform::RUBY
   s.authors     = ["Ilya Grigorik"]
   s.email       = ["ilya@igvita.com"]
-  s.homepage    = ""
-  s.summary     = "spdy"
+  s.homepage    = "https://github.com/igrigorik/spdy"
+  s.summary     = "SPDY is an experiment with protocols for the web"
   s.description = s.summary
 
   s.rubyforge_project = "spdy"
