@@ -8,7 +8,6 @@ module SPDY
 
     def <<(data)
       @buffer << data
-
       try_parse
     end
 
@@ -28,27 +27,28 @@ module SPDY
 
       def try_parse
         type = @buffer[0,1].unpack('C').first >> 7 & 0x01
+        pckt = nil
 
         case type
           when CONTROL_BIT
-            ch = Control::Header.new.read(@buffer[0,12])
+            return if @buffer.size < 12
+            pckt = Control::Header.new.read(@buffer[0,12])
 
-            case ch.type.to_i
+            case pckt.type.to_i
               when 1 then # SYN_STREAM
-                sc = Control::SynStream.new
-                sc.read(@buffer)
-                ch = sc.header
+                pckt = Control::SynStream.new
+                pckt.read(@buffer)
 
                 headers = {}
-                if sc.data.size > 0
-                  data = Zlib.inflate(sc.data.to_s)
+                if pckt.data.size > 0
+                  data = Zlib.inflate(pckt.data.to_s)
                   headers = NV.new.read(data).to_h
                 end
 
                 if @on_headers_complete
-                  @on_headers_complete.call(sc.header.stream_id.to_i,
-                                            sc.associated_to_stream_id.to_i,
-                                            sc.pri.to_i,
+                  @on_headers_complete.call(pckt.header.stream_id.to_i,
+                                            pckt.associated_to_stream_id.to_i,
+                                            pckt.pri.to_i,
                                             headers)
                 end
 
@@ -58,16 +58,24 @@ module SPDY
                 raise 'invalid control frame'
             end
 
-            @on_message_complete.call(ch.stream_id) if @on_message_complete && fin?(ch)
+            @on_message_complete.call(pckt.header.stream_id) if @on_message_complete && fin?(pckt.header)
 
           when DATA_BIT
-            dp = Data::Frame.new.read(@buffer)
-            @on_body.call(dp.stream_id, dp.data) if @on_body
-            @on_message_complete.call(dp.stream_id) if @on_message_complete && fin?(dp)
+            return if @buffer.size < 8
+
+            pckt = Data::Frame.new.read(@buffer)
+            @on_body.call(pckt.stream_id, pckt.data) if @on_body
+            @on_message_complete.call(pckt.stream_id) if @on_message_complete && fin?(pckt)
 
           else
-            raise 'uknown packet type'
+            raise 'unknown packet type'
         end
+
+        # remove parsed data from the buffer
+        @buffer.slice!(0..pckt.num_bytes)
+
+      rescue IOError
+        # rescue partial parse and wait for more data
       end
 
     private

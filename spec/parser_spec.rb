@@ -23,8 +23,25 @@ describe SPDY::Parser do
     end
   end
 
-  xit "should accept incoming data" do
-    lambda { s << 'data' }.should_not raise_error
+  it "should accept incoming data" do
+    lambda { s << DATA }.should_not raise_error
+  end
+
+  it "should reassemble broken packets" do
+    stream, data = nil
+    s.on_body { |stream_id, d| stream, data = stream_id, d }
+
+    lambda { s << DATA[0...DATA.size - 10] }.should_not raise_error
+    lambda { s << DATA[DATA.size-10..DATA.size] }.should_not raise_error
+
+    stream.should == 1
+    data.should == 'This is SPDY.'
+
+    fired = false
+    s.on_headers_complete { fired = true }
+    s << SYN_STREAM
+
+    fired.should be_true
   end
 
   context "CONTROL" do
