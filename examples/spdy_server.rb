@@ -6,8 +6,8 @@ require 'spdy'
 class SPDYHandler < EM::Connection
   def post_init
     @parser = SPDY::Parser.new
-    @parser.on_headers_complete do |h|
-      p [:SPDY_HEADERS, h]
+    @parser.on_headers_complete do |stream_id, associated_stream, priority, headers|
+      p [:SPDY_HEADERS, headers]
 
       sr = SPDY::Protocol::Control::SynReply.new
       h = {'Content-Type' => 'text/plain', 'status' => '200 OK', 'version' => 'HTTP/1.1'}
@@ -42,7 +42,13 @@ class SPDYHandler < EM::Connection
 end
 
 EM.run do
-  EM.start_server '0.0.0.0', ARGV[0], SPDYHandler
+  EM.start_server '0.0.0.0', 10000, SPDYHandler
 end
 
-# > ruby spdy_server.rb 10001
+# (1) start the SPDY eventmachine server
+# > ruby spdy_server.rb
+#
+# (2) start Chrome and force it to use SPDY over SSL.. on OSX:
+# > /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --use-spdy=ssl
+#
+# (3) visit https://localhost:1000/
