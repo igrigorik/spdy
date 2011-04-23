@@ -25,6 +25,23 @@ module SPDY
 
     private
 
+      def unpack_control(pckt, data)
+        pckt.read(data)
+
+        headers = {}
+        if pckt.data.size > 0
+          data = Zlib.inflate(pckt.data.to_s)
+          headers = NV.new.read(data).to_h
+        end
+
+        if @on_headers_complete
+          @on_headers_complete.call(pckt.header.stream_id.to_i,
+                                    (pckt.associated_to_stream_id.to_i rescue nil),
+                                    (pckt.pri.to_i rescue nil),
+                                    headers)
+        end
+      end
+
       def try_parse
         type = @buffer[0,1].unpack('C').first >> 7 & 0x01
         pckt = nil
@@ -37,23 +54,12 @@ module SPDY
             case pckt.type.to_i
               when 1 then # SYN_STREAM
                 pckt = Control::SynStream.new
-                pckt.read(@buffer)
-
-                headers = {}
-                if pckt.data.size > 0
-                  data = Zlib.inflate(pckt.data.to_s)
-                  headers = NV.new.read(data).to_h
-                end
-
-                if @on_headers_complete
-                  @on_headers_complete.call(pckt.header.stream_id.to_i,
-                                            pckt.associated_to_stream_id.to_i,
-                                            pckt.pri.to_i,
-                                            headers)
-                end
+                unpack_control(pckt, @buffer)
 
               when 2 then # SYN_REPLY
-                raise 'SYN_REPLY not handled yet'
+                pckt = Control::SynReply.new
+                unpack_control(pckt, @buffer)
+
               else
                 raise 'invalid control frame'
             end
