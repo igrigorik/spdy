@@ -6,41 +6,7 @@ module SPDY
     VERSION     = 2
 
     module Control
-      class Header < BinData::Record
-        hide :u1
-
-        bit1 :frame, :initial_value => CONTROL_BIT
-        bit15 :version, :initial_value => VERSION
-        bit16 :type
-
-        bit8 :flags
-        bit24 :len
-
-        bit1 :u1
-        bit31 :stream_id
-      end
-
-      class SynStream < BinData::Record
-        hide :u1, :u2
-
-        header :header
-
-        bit1  :u1
-        bit31 :associated_to_stream_id
-
-        bit2  :pri
-        bit14 :u2
-
-        string :data, :read_length => lambda { header.len - 10 }
-      end
-
-      class SynReply < BinData::Record
-        attr_accessor :uncompressed_data
-
-        header :header
-        bit16 :unused
-        string :data, :read_length => lambda { header.len - 6 }
-
+      module Helpers
         def parse(chunk)
           self.read(chunk)
 
@@ -65,6 +31,47 @@ module SPDY
 
           self
         end
+      end
+
+      class Header < BinData::Record
+        hide :u1
+
+        bit1 :frame, :initial_value => CONTROL_BIT
+        bit15 :version, :initial_value => VERSION
+        bit16 :type
+
+        bit8 :flags
+        bit24 :len
+
+        bit1 :u1
+        bit31 :stream_id
+      end
+
+      class SynStream < BinData::Record
+        attr_accessor :uncompressed_data
+        include Helpers
+
+        hide :u1, :u2
+
+        header :header
+
+        bit1  :u1
+        bit31 :associated_to_stream_id
+
+        bit2  :pri
+        bit14 :u2
+
+        string :data, :read_length => lambda { header.len - 10 }
+      end
+
+      class SynReply < BinData::Record
+        attr_accessor :uncompressed_data
+        include Helpers
+
+        header :header
+        bit16 :unused
+        string :data, :read_length => lambda { header.len - 6 }
+
       end
     end
 

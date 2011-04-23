@@ -11,6 +11,36 @@ describe SPDY::Protocol do
     end
   end
 
+  context "SYN_STREAM" do
+    it "should create a SYN_STREAM packet" do
+      sr = SPDY::Protocol::Control::SynStream.new
+
+      headers = {
+        "accept"=>"application/xml", "host"=>"127.0.0.1:9000",
+        "method"=>"GET", "scheme"=>"https",
+        "url"=>"/?echo=a&format=json","version"=>"HTTP/1.1"
+      }
+
+      sr.create(:stream_id => 1, :headers => headers)
+      sr.header.version.should == 2
+      sr.pri.should == 0
+
+      sr.header.len.should > 50
+      sr.data.should_not be_nil
+    end
+
+    it "should parse SYN_REPLY packet" do
+      sr = SPDY::Protocol::Control::SynStream.new
+      sr.parse(SYN_STREAM)
+
+      sr.header.type.should == 1
+      sr.uncompressed_data.to_h.class.should == Hash
+      sr.uncompressed_data.to_h['method'].should == 'GET'
+
+      sr.to_binary_s.should == SYN_STREAM
+    end
+  end
+
   context "SYN_REPLY" do
     it "should create a SYN_REPLY packet" do
       sr = SPDY::Protocol::Control::SynReply.new
