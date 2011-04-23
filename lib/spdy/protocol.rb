@@ -8,6 +8,7 @@ module SPDY
     module Control
       module Helpers
         def parse(chunk)
+          head = Control::Header.new.read(chunk)
           self.read(chunk)
 
           data = Zlib.inflate(self.data.to_s)
@@ -15,9 +16,9 @@ module SPDY
           self
         end
 
-        def create(opts = {})
-          self.header.type  = 2
-          self.header.len   = 6
+        def build(opts = {})
+          self.header.type  = opts[:type]
+          self.header.len   = opts[:len]
 
           self.header.flags   = opts[:flags] || 0
           self.header.stream_id = opts[:stream_id]
@@ -27,6 +28,7 @@ module SPDY
 
           nv = SPDY::Zlib.deflate(nv.to_binary_s)
           self.header.len = self.header.len.to_i + nv.size
+
           self.data = nv
 
           self
@@ -62,6 +64,10 @@ module SPDY
         bit14 :u2
 
         string :data, :read_length => lambda { header.len - 10 }
+
+        def create(opts = {})
+          build({:type => 1, :len => 10}.merge(opts))
+        end
       end
 
       class SynReply < BinData::Record
@@ -72,6 +78,9 @@ module SPDY
         bit16 :unused
         string :data, :read_length => lambda { header.len - 6 }
 
+        def create(opts = {})
+          build({:type => 2, :len => 6}.merge(opts))
+        end
       end
     end
 

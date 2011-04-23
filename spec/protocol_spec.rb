@@ -27,11 +27,17 @@ describe SPDY::Protocol do
 
       sr.header.len.should > 50
       sr.data.should_not be_nil
+
+      st = SPDY::Protocol::Control::SynStream.new
+      st.parse(sr.to_binary_s)
+      st.num_bytes.should == sr.to_binary_s.size
     end
 
-    it "should parse SYN_REPLY packet" do
+    it "should parse SYN_STREAM packet" do
       sr = SPDY::Protocol::Control::SynStream.new
       sr.parse(SYN_STREAM)
+
+      sr.num_bytes.should == SYN_STREAM.size
 
       sr.header.type.should == 1
       sr.uncompressed_data.to_h.class.should == Hash
@@ -85,6 +91,16 @@ describe SPDY::Protocol do
 
       d.to_binary_s.should == DATA_FIN
     end
+
+    it "should read a FIN data frame" do
+      d = SPDY::Protocol::Data::Frame.new
+      d.create(:stream_id => 1, :flags => 1)
+
+      d.to_binary_s.should == DATA_FIN
+      pckt = SPDY::Protocol::Data::Frame.new.read(d.to_binary_s)
+      pckt.flags.should == 1
+    end
+
   end
 
   # context "RST_STREAM" do

@@ -72,9 +72,9 @@ module SPDY
         end
 
         # remove parsed data from the buffer
-        @buffer.slice!(0..pckt.num_bytes)
+        @buffer.slice!(0...pckt.num_bytes)
 
-      rescue IOError
+      rescue IOError => e
         # rescue partial parse and wait for more data
       end
 
