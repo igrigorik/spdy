@@ -3,11 +3,31 @@ require 'helper'
 describe SPDY::Protocol do
 
   context "NV" do
-    it "should create an NV packet" do
-      nv = SPDY::Protocol::NV.new
-      nv.create({'Content-Type' => 'text/plain', 'status' => '200 OK', 'version' => 'HTTP/1.1'})
+    describe "creating a packet" do
+      before do
+        nv = SPDY::Protocol::NV.new
 
-      nv.to_binary_s.should == NV
+        @key_values = {'version' => 'HTTP/1.1', 'status' => '200 OK', 'Content-Type' => 'text/plain'}
+        nv.create(@key_values)
+
+        @binary_string = nv.to_binary_s
+      end
+
+      it "begins with the number of key-value pairs" do
+        @binary_string[0..1].should == "\x00\x03"
+      end
+
+      it "prefaces keys with the length of the key" do
+        @binary_string.should =~ %r{\x00\x0cContent-Type}
+      end
+      it "prefaces values with the length of the value" do
+        @binary_string.should =~ %r{\x00\x08HTTP/1.1}
+      end
+
+      it "has length equal to the sum of 2 bytes (describing the total number of key-value pairs), 2 bytes for each key and each value (describing the length of each), and the number bytes in each key and value" do
+        @binary_string.length.should ==
+          @key_values.inject(2 + (3*2*2)) {|sum, kv| sum + kv[0].to_s.length + kv[1].to_s.length}
+      end
     end
   end
 
