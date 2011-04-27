@@ -7,28 +7,28 @@ describe SPDY::Protocol do
       before do
         nv = SPDY::Protocol::NV.new
 
-        @key_values = {'version' => 'HTTP/1.1', 'status' => '200 OK', 'Content-Type' => 'text/plain'}
-        nv.create(@key_values)
+        @name_values = {'version' => 'HTTP/1.1', 'status' => '200 OK', 'Content-Type' => 'text/plain'}
+        nv.create(@name_values)
 
         @binary_string = nv.to_binary_s
       end
 
-      it "begins with the number of key-value pairs" do
+      it "begins with the number of name-value pairs" do
         @binary_string[0..1].should == "\x00\x03"
       end
 
-      it "prefaces keys with the length of the key" do
+      it "prefaces names with the length of the name" do
         @binary_string.should =~ %r{\x00\x0cContent-Type}
       end
       it "prefaces values with the length of the value" do
         @binary_string.should =~ %r{\x00\x08HTTP/1.1}
       end
 
-      it "has 2 bytes (total number of key-value pairs) + 2 bytes for each key (length of key) + 2 bytes for each value (length of value) + keys + values" do
-        num_size_bytes = 2 + @key_values.size * (2 + 2)
+      it "has 2 bytes (total number of name-value pairs) + 2 bytes for each name (length of name) + 2 bytes for each value (length of value) + names + values" do
+        num_size_bytes = 2 + @name_values.size * (2 + 2)
 
         @binary_string.length.should ==
-          @key_values.inject(num_size_bytes) {|sum, kv| sum + kv[0].length + kv[1].length}
+          @name_values.inject(num_size_bytes) {|sum, kv| sum + kv[0].length + kv[1].length}
       end
     end
   end
