@@ -24,9 +24,11 @@ describe SPDY::Protocol do
         @binary_string.should =~ %r{\x00\x08HTTP/1.1}
       end
 
-      it "has length equal to the sum of 2 bytes (describing the total number of key-value pairs), 2 bytes for each key and each value (describing the length of each), and the number bytes in each key and value" do
+      it "has 2 bytes (total number of key-value pairs) + 2 bytes for each key (length of key) + 2 bytes for each value (length of value) + keys + values" do
+        num_size_bytes = 2 + @key_values.size * (2 + 2)
+
         @binary_string.length.should ==
-          @key_values.inject(2 + (3*2*2)) {|sum, kv| sum + kv[0].to_s.length + kv[1].to_s.length}
+          @key_values.inject(num_size_bytes) {|sum, kv| sum + kv[0].length + kv[1].length}
       end
     end
   end
