@@ -44,7 +44,7 @@ describe SPDY::Protocol do
       }
 
       sr.create(:stream_id => 1, :headers => headers)
-      sr.header.version.should == 2
+      sr.header.version.should == 1
       sr.pri.should == 0
 
       sr.header.len.should > 50
@@ -70,19 +70,68 @@ describe SPDY::Protocol do
   end
 
   context "SYN_REPLY" do
-    it "should create a SYN_REPLY packet" do
-      sr = SPDY::Protocol::Control::SynReply.new
+    describe "creating a packet" do
+      before do
+        @sr = SPDY::Protocol::Control::SynReply.new
 
-      headers = {'Content-Type' => 'text/plain', 'status' => '200 OK', 'version' => 'HTTP/1.1'}
-      sr.create(:stream_id => 1, :headers => headers)
+        headers = {'Content-Type' => 'text/plain', 'status' => '200 OK', 'version' => 'HTTP/1.1'}
+        @sr.create(:stream_id => 1, :headers => headers)
+      end
 
-      sr.header.version.should == 2
-      sr.header.stream_id.should == 1
+      describe "common control frame fields" do
+        it "is version 1" do
+          @sr.header.version.should == 1
+        end
+        it "is type 2" do
+          @sr.header.type.should == 2
+        end
+        it "has empty flags" do
+          @sr.header.flags.should == 0
+        end
+      end
 
-      sr.header.len.should > 50
-      sr.data.should_not be_nil
+      describe "type specific frame fields" do
+        it "has a stream id" do
+          @sr.header.stream_id.should == 1
+        end
+        it "has data" do
+          @sr.data.should_not be_nil
+        end
+        specify { @sr.header.len.should > 50 }
+      end
 
-      sr.to_binary_s.should == SYN_REPLY
+      describe "assembled packet" do
+        before do
+          @packet = @sr.to_binary_s
+        end
+
+        specify "starts with a control bit" do
+          @packet[0...1].should == "\x80"
+        end
+        specify "followed by the version" do
+          @packet[1...2].should == "\x01"
+        end
+        specify "followed by the type" do
+          @packet[2..3].should == "\x00\x02"
+        end
+        specify "followed by flags" do
+          @packet[4...5].should == "\x00"
+        end
+        specify "followed by the length" do
+          @packet[5..7].should == "\x00\x005"
+        end
+        specify "followed by the stream ID" do
+          @packet[8..11].should == "\x00\x00\x00\x01"
+        end
+        specify "followed by unused space" do
+          @packet[12..13].should == "\x00\x00"
+        end
+        specify "followed by compressed NV data" do
+          data = SPDY::Zlib.inflate(@packet[14..-1].to_s)
+          data.should =~ %r{\x00\x0cContent-Type}
+        end
+      end
+
     end
 
     it "should parse SYN_REPLY packet" do
