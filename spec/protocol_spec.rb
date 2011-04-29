@@ -146,6 +146,41 @@ describe SPDY::Protocol do
     end
   end
 
+  context "PING" do
+    it "can parse a PING packet" do
+      ping = SPDY::Protocol::Control::Ping.new
+      ping.parse(PING)
+
+      ping.stream_id.should == 1
+      ping.type.should == 6
+
+      ping.to_binary_s.should == PING
+    end
+
+    describe "the assembled packet" do
+      before do
+        @ping = SPDY::Protocol::Control::Ping.new
+        @ping.create(:stream_id => 1)
+        @frame = @ping.to_binary_s
+      end
+      specify "starts with a control bit" do
+        @frame[0].should == "\x80"
+      end
+      specify "followed by the version (1)" do
+        @frame[1].should == "\x01"
+      end
+      specify "followed by the type (6)" do
+        @frame[2..3].should == "\x00\x06"
+      end
+      specify "followed by flags (0)" do
+        @frame[4].should == "\x00"
+      end
+      specify "followed by the length (always 4)" do
+        @frame[5..7].should == "\x00\x00\x04"
+      end
+    end
+  end
+
   context "DATA" do
     it "should create a data frame" do
       data = "This is SPDY."

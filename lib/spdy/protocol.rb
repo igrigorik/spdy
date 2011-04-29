@@ -82,6 +82,27 @@ module SPDY
           build({:type => 2, :len => 6}.merge(opts))
         end
       end
+
+      class Ping < BinData::Record
+        bit1 :frame, :initial_value => CONTROL_BIT
+        bit15 :version, :initial_value => VERSION
+        bit16 :type, :value => 6
+
+        bit8 :flags, :value => 0
+        bit24 :len, :value => 4
+
+        bit32 :stream_id
+
+        def parse(chunk)
+          self.read(chunk)
+          self
+        end
+
+        def create(opts = {})
+          self.stream_id = opts.fetch(:stream_id, 1)
+          self
+        end
+      end
     end
 
     module Data
