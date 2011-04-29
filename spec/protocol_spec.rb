@@ -44,7 +44,7 @@ describe SPDY::Protocol do
       }
 
       sr.create(:stream_id => 1, :headers => headers)
-      sr.header.version.should == 1
+      sr.header.version.should == 2
       sr.pri.should == 0
 
       sr.header.len.should > 50
@@ -79,8 +79,8 @@ describe SPDY::Protocol do
       end
 
       describe "common control frame fields" do
-        it "is version 1" do
-          @sr.header.version.should == 1
+        it "is version 2" do
+          @sr.header.version.should == 2
         end
         it "is type 2" do
           @sr.header.type.should == 2
@@ -109,7 +109,7 @@ describe SPDY::Protocol do
           @packet[0...1].should == "\x80"
         end
         specify "followed by the version" do
-          @packet[1...2].should == "\x01"
+          @packet[1...2].should == "\x02"
         end
         specify "followed by the type" do
           @packet[2..3].should == "\x00\x02"
@@ -166,8 +166,8 @@ describe SPDY::Protocol do
       specify "starts with a control bit" do
         @frame[0].should == "\x80"
       end
-      specify "followed by the version (1)" do
-        @frame[1].should == "\x01"
+      specify "followed by the version (2)" do
+        @frame[1].should == "\x02"
       end
       specify "followed by the type (6)" do
         @frame[2..3].should == "\x00\x06"
@@ -229,8 +229,8 @@ describe SPDY::Protocol do
       specify "starts with a control bit" do
         @frame[0].should == "\x80"
       end
-      specify "followed by the version (1)" do
-        @frame[1].should == "\x01"
+      specify "followed by the version (2)" do
+        @frame[1].should == "\x02"
       end
       specify "followed by the type (3)" do
         @frame[2..3].should == "\x00\x03"

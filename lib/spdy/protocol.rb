@@ -3,7 +3,7 @@ module SPDY
 
     CONTROL_BIT = 1
     DATA_BIT    = 0
-    VERSION     = 1
+    VERSION     = 2
 
     module Control
       module Helpers
