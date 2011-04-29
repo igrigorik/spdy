@@ -209,7 +209,41 @@ describe SPDY::Protocol do
 
   end
 
-  # context "RST_STREAM" do
-  #   it "should parse reset packet"
-  # end
+  context "RST_STREAM" do
+    it "can parse a reset packet" do
+      ping = SPDY::Protocol::Control::RstStream.new
+      ping.parse(RST_STREAM)
+
+      ping.stream_id.should == 1
+      ping.type.should == 3
+
+      ping.to_binary_s.should == RST_STREAM
+    end
+
+    describe "the assembled packet" do
+      before do
+        @rs = SPDY::Protocol::Control::RstStream.new
+        @rs.create(:stream_id => 1, :status_code => 1)
+        @frame = @rs.to_binary_s
+      end
+      specify "starts with a control bit" do
+        @frame[0].should == "\x80"
+      end
+      specify "followed by the version (1)" do
+        @frame[1].should == "\x01"
+      end
+      specify "followed by the type (3)" do
+        @frame[2..3].should == "\x00\x03"
+      end
+      specify "followed by flags (0)" do
+        @frame[4].should == "\x00"
+      end
+      specify "followed by the length (always 8)" do
+        @frame[5..7].should == "\x00\x00\x08"
+      end
+      specify "followed by the status code" do
+        @frame[8..11].should == "\x00\x00\x00\x01"
+      end
+    end
+  end
 end

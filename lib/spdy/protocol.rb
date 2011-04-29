@@ -83,6 +83,33 @@ module SPDY
         end
       end
 
+      class RstStream < BinData::Record
+        hide :u1
+
+        bit1 :frame, :initial_value => CONTROL_BIT
+        bit15 :version, :initial_value => VERSION
+        bit16 :type, :value => 3
+
+        bit8 :flags, :value => 0
+        bit24 :len, :value => 8
+
+        bit1  :u1
+        bit31 :stream_id
+
+        bit32 :status_code
+
+        def parse(chunk)
+          self.read(chunk)
+          self
+        end
+
+        def create(opts = {})
+          self.stream_id = opts.fetch(:stream_id, 1)
+          self.status_code = opts.fetch(:status_code, 5)
+          self
+        end
+      end
+
       class Ping < BinData::Record
         bit1 :frame, :initial_value => CONTROL_BIT
         bit15 :version, :initial_value => VERSION
