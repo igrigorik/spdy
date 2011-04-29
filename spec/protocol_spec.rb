@@ -161,22 +161,22 @@ describe SPDY::Protocol do
       before do
         @ping = SPDY::Protocol::Control::Ping.new
         @ping.create(:stream_id => 1)
-        @frame = @ping.to_binary_s
+        @frame = Array(@ping.to_binary_s.bytes)
       end
       specify "starts with a control bit" do
-        @frame[0].should == "\x80"
+        @frame[0].should == 128
       end
       specify "followed by the version (2)" do
-        @frame[1].should == "\x02"
+        @frame[1].should == 2
       end
       specify "followed by the type (6)" do
-        @frame[2..3].should == "\x00\x06"
+        @frame[2..3].should == [0,6]
       end
       specify "followed by flags (0)" do
-        @frame[4].should == "\x00"
+        @frame[4].should == 0
       end
       specify "followed by the length (always 4)" do
-        @frame[5..7].should == "\x00\x00\x04"
+        @frame[5..7].should == [0,0,4]
       end
     end
   end
@@ -224,25 +224,25 @@ describe SPDY::Protocol do
       before do
         @rs = SPDY::Protocol::Control::RstStream.new
         @rs.create(:stream_id => 1, :status_code => 1)
-        @frame = @rs.to_binary_s
+        @frame = Array(@rs.to_binary_s.bytes)
       end
       specify "starts with a control bit" do
-        @frame[0].should == "\x80"
+        @frame[0].should == 128
       end
       specify "followed by the version (2)" do
-        @frame[1].should == "\x02"
+        @frame[1].should == 2
       end
       specify "followed by the type (3)" do
-        @frame[2..3].should == "\x00\x03"
+        @frame[2..3].should == [0,3]
       end
       specify "followed by flags (0)" do
-        @frame[4].should == "\x00"
+        @frame[4].should == 0
       end
       specify "followed by the length (always 8)" do
-        @frame[5..7].should == "\x00\x00\x08"
+        @frame[5..7].should == [0,0,8]
       end
       specify "followed by the status code" do
-        @frame[8..11].should == "\x00\x00\x00\x01"
+        @frame[8..11].should == [0,0,0,1]
       end
     end
   end
