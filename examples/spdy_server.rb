@@ -51,4 +51,4 @@ end
 # (2) start Chrome and force it to use SPDY over SSL.. on OSX:
 # > /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --use-spdy=ssl
 #
-# (3) visit https://localhost:1000/
+# (3) visit https://localhost:10000/
