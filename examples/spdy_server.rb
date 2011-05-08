@@ -29,8 +29,7 @@ class SPDYHandler < EM::Connection
       p [:SPDY, :sent, :DATA_FIN]
     end
 
-    #start_tls
-    start_tls(:private_key_file => 'key.pem', :cert_chain_file => 'cert.pem', :verify_peer => false)
+    start_tls
   end
 
   def receive_data(data)
