@@ -184,6 +184,19 @@ describe SPDY::Protocol do
     end
 
     describe "SETTINGS" do
+      it "can parse a SETTINGS packet" do
+        settings = SPDY::Protocol::Control::Settings.new
+        settings.parse(SETTINGS)
+
+        settings.type.should == 4
+        settings.number_of_entries.should == 1
+
+        settings.headers[0].id_data.should == SPDY::Protocol::SETTINGS_ROUND_TRIP_TIME
+        settings.headers[0].value_data.should == 300
+
+        settings.to_binary_s.should == SETTINGS
+      end
+
       describe "the assembled packet" do
         before do
           @settings = SPDY::Protocol::Control::Settings.new

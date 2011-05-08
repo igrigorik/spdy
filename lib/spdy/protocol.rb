@@ -126,9 +126,9 @@ module SPDY
         # TODO use pairs to be consistent with NV
         bit32 :number_of_entries
 
-        array :headers do
-          bit32 :id
-          bit32 :data
+        array :headers, :initial_length => :number_of_entries do
+          bit32 :id_data
+          bit32 :value_data
         end
 
         def parse(chunk)
@@ -137,11 +137,11 @@ module SPDY
         end
 
         def create(opts = {})
-          self.number_of_entries = opts.size
           opts.each do |k, v|
             key = SPDY::Protocol.const_get(k.to_s.upcase)
-            self.headers << { :id =>  key , :data => v }
+            self.headers << { :id_data =>  key , :value_data => v }
           end
+          self.number_of_entries = opts.size
           self
         end
       end
