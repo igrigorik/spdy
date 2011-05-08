@@ -240,7 +240,7 @@ describe SPDY::Protocol do
         ping = SPDY::Protocol::Control::Ping.new
         ping.parse(PING)
 
-        ping.stream_id.should == 1
+        ping.ping_id.should == 1
         ping.type.should == 6
 
         ping.to_binary_s.should == PING
@@ -249,7 +249,7 @@ describe SPDY::Protocol do
       describe "the assembled packet" do
         before do
           @ping = SPDY::Protocol::Control::Ping.new
-          @ping.create(:stream_id => 1)
+          @ping.create(:ping_id => 1)
           @frame = Array(@ping.to_binary_s.bytes)
         end
         specify "starts with a control bit" do
@@ -271,7 +271,41 @@ describe SPDY::Protocol do
     end
 
     describe "GOAWAY" do
-      it "supports this frame"
+      it "can parse a GOAWAY packet" do
+        goaway = SPDY::Protocol::Control::Goaway.new
+        goaway.parse(GOAWAY)
+
+        goaway.stream_id.should == 1
+        goaway.type.should == 7
+
+        goaway.to_binary_s.should == GOAWAY
+      end
+
+      describe "the assembled packet" do
+        before do
+          @goaway = SPDY::Protocol::Control::Goaway.new
+          @goaway.create(:stream_id => 42)
+          @frame = Array(@goaway.to_binary_s.bytes)
+        end
+        specify "starts with a control bit" do
+          @frame[0].should == 128
+        end
+        specify "followed by the version (2)" do
+          @frame[1].should == 2
+        end
+        specify "followed by the type (7)" do
+          @frame[2..3].should == [0,7]
+        end
+        specify "followed by flags (0)" do
+          @frame[4].should == 0
+        end
+        specify "followed by the length (always 4)" do
+          @frame[5..7].should == [0,0,4]
+        end
+        specify "followed by the last good stream ID (1 ignored bit + 31 bits)" do
+          @frame[8..11].should == [0,0,0,42]
+        end
+      end
     end
 
     describe "HEADERS" do

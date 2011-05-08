@@ -153,7 +153,32 @@ module SPDY
         bit8 :flags, :value => 0
         bit24 :len, :value => 4
 
-        bit32 :stream_id
+        bit32 :ping_id
+
+        def parse(chunk)
+          self.read(chunk)
+          self
+        end
+
+        def create(opts = {})
+          self.ping_id = opts.fetch(:ping_id, 1)
+          self
+        end
+      end
+
+
+      class Goaway < BinData::Record
+        hide :u1
+
+        bit1 :frame, :initial_value => CONTROL_BIT
+        bit15 :version, :initial_value => VERSION
+        bit16 :type, :value => 7
+
+        bit8 :flags, :value => 0
+        bit24 :len, :value => 4
+
+        bit1 :u1
+        bit31 :stream_id
 
         def parse(chunk)
           self.read(chunk)
