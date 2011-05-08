@@ -189,7 +189,7 @@ describe SPDY::Protocol do
         settings.parse(SETTINGS)
 
         settings.type.should == 4
-        settings.number_of_entries.should == 1
+        settings.pairs.should == 1
 
         settings.headers[0].id_data.should == SPDY::Protocol::SETTINGS_ROUND_TRIP_TIME
         settings.headers[0].value_data.should == 300

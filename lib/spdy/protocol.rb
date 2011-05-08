@@ -122,11 +122,10 @@ module SPDY
         bit16 :type, :value => 4
 
         bit8 :flags
-        bit24 :len, :value => lambda { number_of_entries * 8 }
-        # TODO use pairs to be consistent with NV
-        bit32 :number_of_entries
+        bit24 :len, :value => lambda { pairs * 8 }
+        bit32 :pairs
 
-        array :headers, :initial_length => :number_of_entries do
+        array :headers, :initial_length => :pairs do
           bit32 :id_data
           bit32 :value_data
         end
@@ -141,7 +140,7 @@ module SPDY
             key = SPDY::Protocol.const_get(k.to_s.upcase)
             self.headers << { :id_data =>  key , :value_data => v }
           end
-          self.number_of_entries = opts.size
+          self.pairs = opts.size
           self
         end
       end
