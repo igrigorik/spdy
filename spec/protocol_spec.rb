@@ -183,7 +183,39 @@ describe SPDY::Protocol do
       end
     end
 
-    describe "SETTINGS"
+    describe "SETTINGS" do
+      describe "the assembled packet" do
+        before do
+          @settings = SPDY::Protocol::Control::Settings.new
+          @settings.create(
+            :settings_round_trip_time => 300
+          )
+          @frame = Array(@settings.to_binary_s.bytes)
+        end
+        specify "starts with a control bit" do
+          @frame[0].should == 128
+        end
+        specify "followed by the version (2)" do
+          @frame[1].should == 2
+        end
+        specify "followed by the type (4)" do
+          @frame[2..3].should == [0,4]
+        end
+        specify "followed by flags" do
+          @frame[4].should == 0
+        end
+        specify "followed by the length (24 bits)" do
+          @frame[5..7].should == [0,0,8]
+        end
+        specify "followed by the number of entries (32 bits)" do
+          @frame[8..11].should == [0,0,0,1]
+        end
+        specify "followed by ID/Value Pairs (32 bits each)" do
+          @frame[12..19].should == [0,0,0,3, 0,0,1,44]
+        end
+      end
+    end
+
     describe "NOOP" do
       specify "not implemented (being dropped from protocol)" do
         # NOOP
@@ -225,9 +257,13 @@ describe SPDY::Protocol do
       end
     end
 
-    describe "GOAWAY"
-    describe "HEADERS"
+    describe "GOAWAY" do
+      it "supports this frame"
+    end
 
+    describe "HEADERS" do
+      it "supports this frame"
+    end
 
     describe "NV" do
       describe "creating a packet" do

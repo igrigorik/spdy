@@ -5,6 +5,12 @@ module SPDY
     DATA_BIT    = 0
     VERSION     = 2
 
+    SETTINGS_UPLOAD_BANDWIDTH = 1
+    SETTINGS_DOWNLOAD_BANDWIDTH = 2
+    SETTINGS_ROUND_TRIP_TIME = 3
+    SETTINGS_MAX_CONCURRENT_STREAMS = 4
+    SETTINGS_CURRENT_CWND = 5
+
     module Control
       module Helpers
         def parse(chunk)
@@ -106,6 +112,36 @@ module SPDY
         def create(opts = {})
           self.stream_id = opts.fetch(:stream_id, 1)
           self.status_code = opts.fetch(:status_code, 5)
+          self
+        end
+      end
+
+      class Settings < BinData::Record
+        bit1 :frame, :initial_value => CONTROL_BIT
+        bit15 :version, :initial_value => VERSION
+        bit16 :type, :value => 4
+
+        bit8 :flags
+        bit24 :len, :value => lambda { number_of_entries * 8 }
+        # TODO use pairs to be consistent with NV
+        bit32 :number_of_entries
+
+        array :headers do
+          bit32 :id
+          bit32 :data
+        end
+
+        def parse(chunk)
+          self.read(chunk)
+          self
+        end
+
+        def create(opts = {})
+          self.number_of_entries = opts.size
+          opts.each do |k, v|
+            key = SPDY::Protocol.const_get(k.to_s.upcase)
+            self.headers << { :id =>  key , :data => v }
+          end
           self
         end
       end
