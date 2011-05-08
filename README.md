@@ -11,26 +11,30 @@ Today, SPDY is built into Chrome + Google web-server infrastructure and is curre
 
 SPDY specification (Draft 2) defines its own framing and message exchange protocol which is layered on top of a raw TCP/SSL connection. This gem implements a basic, pure Ruby parser for the SPDY protocol:
 
-    s = SPDY::Parser.new
+```ruby
+s = SPDY::Parser.new
 
-    s.on_headers_complete { |stream_id, associated_stream, priority, headers| ... }
-    s.on_body             { |stream_id, data| ... }
-    s.on_message_complete { |stream_id| ... }
+s.on_headers_complete { |stream_id, associated_stream, priority, headers| ... }
+s.on_body             { |stream_id, data| ... }
+s.on_message_complete { |stream_id| ... }
 
-    s << recieved_data
+s << recieved_data
+```
 
 However, parsing the data is not enough, to do the full exchange you also have to respond to a SPDY client with appropriate 'control' and 'data' frames:
 
-    sr = SPDY::Protocol::Control::SynReply.new
-    headers = {'Content-Type' => 'text/plain', 'status' => '200 OK', 'version' => 'HTTP/1.1'}
-    sr.create(:stream_id => 1, :headers => headers)
-    send_data sr.to_binary_s
+```ruby
+sr = SPDY::Protocol::Control::SynReply.new
+headers = {'Content-Type' => 'text/plain', 'status' => '200 OK', 'version' => 'HTTP/1.1'}
+sr.create(:stream_id => 1, :headers => headers)
+send_data sr.to_binary_s
 
-    # or, to send a data frame
+# or, to send a data frame
 
-    d = SPDY::Protocol::Data::Frame.new
-    d.create(:stream_id => 1, :data => "This is SPDY.")
-    send_data d.to_binary_s
+d = SPDY::Protocol::Data::Frame.new
+d.create(:stream_id => 1, :data => "This is SPDY.")
+send_data d.to_binary_s
+```
 
 See example eventmachine server in *examples/spdy_server.rb* for a minimal SPDY "hello world" server.
 
@@ -40,4 +44,4 @@ See example eventmachine server in *examples/spdy_server.rb* for a minimal SPDY 
 
 ### License
 
-(MIT License) - Copyright (c) 2011 Ilya Grigorik
+MIT License - Copyright (c) 2011 Ilya Grigorik
