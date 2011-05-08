@@ -183,6 +183,13 @@ describe SPDY::Protocol do
       end
     end
 
+    describe "SETTINGS"
+    describe "NOOP" do
+      specify "not implemented (being dropped from protocol)" do
+        # NOOP
+      end
+    end
+
     describe "PING" do
       it "can parse a PING packet" do
         ping = SPDY::Protocol::Control::Ping.new
@@ -217,6 +224,10 @@ describe SPDY::Protocol do
         end
       end
     end
+
+    describe "GOAWAY"
+    describe "HEADERS"
+
 
     describe "NV" do
       describe "creating a packet" do
