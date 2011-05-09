@@ -309,7 +309,53 @@ describe SPDY::Protocol do
     end
 
     describe "HEADERS" do
-      it "supports this frame"
+      it "can parse a HEADERS packet"do
+        headers = SPDY::Protocol::Control::Headers.new
+        headers.parse(HEADERS)
+
+        headers.header.stream_id.should == 1
+        headers.header.type.should == 8
+
+        headers.to_binary_s.should == HEADERS
+      end
+
+      describe "the assembled packet" do
+        before do
+          @headers = SPDY::Protocol::Control::Headers.new
+
+          nv = {'Content-Type' => 'text/plain', 'status' => '200 OK', 'version' => 'HTTP/1.1'}
+          @headers.create(:stream_id => 42, :headers => nv)
+
+          @frame = Array(@headers.to_binary_s.bytes)
+        end
+        specify "starts with a control bit" do
+          @frame[0].should == 128
+        end
+        specify "followed by the version (2)" do
+          @frame[1].should == 2
+        end
+        specify "followed by the type (8)" do
+          @frame[2..3].should == [0,8]
+        end
+        specify "followed by flags (8 bits)" do
+          @frame[4].should == 0
+        end
+        specify "followed by the length (24 bits)" do
+          # 4 bytes (stream ID)
+          # 2 bytes (unused)
+          # N bytes for compressed NV section
+          @frame[5..7].should == [0,0,53]
+        end
+        specify "followed by the stream ID (1 ignored bit + 31 bits)" do
+          @frame[8..11].should == [0,0,0,42]
+        end
+        specify "followed by 16 unused bits" do
+          @frame[12..13].should == [0,0]
+        end
+        specify "followed by name/value pairs" do
+          @frame[14..-1].size.should == 47
+        end
+      end
     end
 
     describe "NV" do

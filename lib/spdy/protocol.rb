@@ -166,7 +166,6 @@ module SPDY
         end
       end
 
-
       class Goaway < BinData::Record
         hide :u1
 
@@ -188,6 +187,20 @@ module SPDY
         def create(opts = {})
           self.stream_id = opts.fetch(:stream_id, 1)
           self
+        end
+      end
+
+
+      class Headers < BinData::Record
+        attr_accessor :uncompressed_data
+        include Helpers
+
+        header :header
+        bit16 :unused
+        string :data, :read_length => lambda { header.len - 6 }
+
+        def create(opts = {})
+          build({:type => 8, :len => 6}.merge(opts))
         end
       end
     end
