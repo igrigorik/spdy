@@ -11,4 +11,13 @@ describe SPDY::Zlib do
 
     orig.should == rinse
   end
+
+  it "can deflate multiple packets" do
+    pending "How to re-use deflate stream"
+    # see also https://gist.github.com/982287
+    SPDY::Zlib.inflate(COMPRESSED_HEADER_1)
+
+    SPDY::Zlib.inflate(COMPRESSED_HEADER_2).
+      should == UNCOMPRESSED_HEADER_2
+  end
 end
