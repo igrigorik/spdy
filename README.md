@@ -40,7 +40,7 @@ See example eventmachine server in *examples/spdy_server.rb* for a minimal SPDY 
 
 ## Todo:
 
-- implement support for all [control frames](https://sites.google.com/a/chromium.org/dev/spdy/spdy-protocol/spdy-protocol-draft2#TOC-Control-frames1)
+- reuse zlib context for [duration of session](https://github.com/igrigorik/spdy/issues/2)
 
 ### License
 
