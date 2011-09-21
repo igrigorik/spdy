@@ -9,21 +9,21 @@ class SPDYHandler < EM::Connection
     @parser.on_headers_complete do |stream_id, associated_stream, priority, headers|
       p [:SPDY_HEADERS, headers]
 
-      sr = SPDY::Protocol::Control::SynReply.new
+      sr = SPDY::Protocol::Control::SynReply.new({:zlib_session => @parser.zlib_session})
       h = {'Content-Type' => 'text/plain', 'status' => '200 OK', 'version' => 'HTTP/1.1'}
-      sr.create(:stream_id => 1, :headers => h)
+      sr.create({:stream_id => stream_id, :headers => h})
       send_data sr.to_binary_s
 
       p [:SPDY, :sent, :SYN_REPLY]
 
       d = SPDY::Protocol::Data::Frame.new
-      d.create(:stream_id => 1, :data => "This is SPDY.")
+      d.create(:stream_id => stream_id, :data => "This is SPDY.")
       send_data d.to_binary_s
 
       p [:SPDY, :sent, :DATA]
 
       d = SPDY::Protocol::Data::Frame.new
-      d.create(:stream_id => 1, :flags => 1)
+      d.create(:stream_id => stream_id, :flags => 1)
       send_data d.to_binary_s
 
       p [:SPDY, :sent, :DATA_FIN]
@@ -38,6 +38,7 @@ class SPDYHandler < EM::Connection
 
   def unbind
     p [:SPDY, :connection_closed]
+    @parser.zlib_session.reset
   end
 end
 

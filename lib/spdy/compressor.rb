@@ -1,5 +1,5 @@
 module SPDY
-  module Zlib
+  class Zlib
 
     DICT = \
       "optionsgetheadpostputdeletetraceacceptaccept-charsetaccept-encodingaccept-" \
@@ -18,51 +18,62 @@ module SPDY
 
     CHUNK = 10*1024 # this is silly, but it'll do for now
 
-    def self.inflate(data)
-      in_buf  = FFI::MemoryPointer.from_string(data)
-      out_buf = FFI::MemoryPointer.new(CHUNK)
-
-      zstream = FFI::Zlib::Z_stream.new
-      zstream[:avail_in]  = in_buf.size
-      zstream[:avail_out] = CHUNK
-      zstream[:next_in]   = in_buf
-      zstream[:next_out]  = out_buf
-
-      result = FFI::Zlib.inflateInit(zstream)
+    def initialize
+      @inflate_zstream = FFI::Zlib::Z_stream.new
+      result = FFI::Zlib.inflateInit(@inflate_zstream)
       raise "invalid stream" if result != FFI::Zlib::Z_OK
 
-      result = FFI::Zlib.inflate(zstream, FFI::Zlib::Z_SYNC_FLUSH)
-      raise "invalid stream" if result != FFI::Zlib::Z_NEED_DICT
+      @deflate_zstream = FFI::Zlib::Z_stream.new
+      result = FFI::Zlib.deflateInit(@deflate_zstream, FFI::Zlib::Z_DEFAULT_COMPRESSION)
+      raise "invalid stream" if result != FFI::Zlib::Z_OK
 
-      result = FFI::Zlib.inflateSetDictionary(zstream, DICT, DICT.size)
+      result = FFI::Zlib.deflateSetDictionary(@deflate_zstream, DICT, DICT.size)
       raise "invalid dictionary" if result != FFI::Zlib::Z_OK
-
-      result = FFI::Zlib.inflate(zstream, FFI::Zlib::Z_SYNC_FLUSH)
-      raise "cannot inflate" if result != FFI::Zlib::Z_OK
-
-      out_buf.get_bytes(0, zstream[:total_out])
     end
 
-    def self.deflate(data)
+    def reset
+      result = FFI::Zlib.inflateReset(@inflate_zstream)
+      raise "invalid stream" if result != FFI::Zlib::Z_OK
+
+      result = FFI::Zlib.deflateReset(@deflate_zstream)
+      raise "invalid stream" if result != FFI::Zlib::Z_OK
+    end
+
+    def inflate(data)
       in_buf  = FFI::MemoryPointer.from_string(data)
       out_buf = FFI::MemoryPointer.new(CHUNK)
 
-      zstream = FFI::Zlib::Z_stream.new
-      zstream[:avail_in]  = in_buf.size-1
-      zstream[:avail_out] = CHUNK
-      zstream[:next_in]   = in_buf
-      zstream[:next_out]  = out_buf
+      @inflate_zstream[:avail_in]  = in_buf.size-1
+      @inflate_zstream[:avail_out] = CHUNK
+      @inflate_zstream[:next_in]   = in_buf
+      @inflate_zstream[:next_out]  = out_buf
 
-      result = FFI::Zlib.deflateInit(zstream, -1)
-      raise "invalid stream" if result != FFI::Zlib::Z_OK
+      result = FFI::Zlib.inflate(@inflate_zstream, FFI::Zlib::Z_SYNC_FLUSH)
+      if result == FFI::Zlib::Z_NEED_DICT
+        result = FFI::Zlib.inflateSetDictionary(@inflate_zstream, DICT, DICT.size)
+        raise "invalid dictionary" if result != FFI::Zlib::Z_OK
+  
+        result = FFI::Zlib.inflate(@inflate_zstream, FFI::Zlib::Z_SYNC_FLUSH)
+      end
 
-      result = FFI::Zlib.deflateSetDictionary(zstream, DICT, DICT.size)
-      raise "invalid dictionary" if result != FFI::Zlib::Z_OK
+      raise "cannot inflate" if result != FFI::Zlib::Z_OK && result != FFI::Zlib::Z_STREAM_END
 
-      result = FFI::Zlib.deflate(zstream, FFI::Zlib::Z_SYNC_FLUSH)
+      out_buf.get_bytes(0, CHUNK - @inflate_zstream[:avail_out])
+    end
+
+    def deflate(data)
+      in_buf  = FFI::MemoryPointer.from_string(data)
+      out_buf = FFI::MemoryPointer.new(CHUNK)
+
+      @deflate_zstream[:avail_in]  = in_buf.size-1
+      @deflate_zstream[:avail_out] = CHUNK
+      @deflate_zstream[:next_in]   = in_buf
+      @deflate_zstream[:next_out]  = out_buf
+
+      result = FFI::Zlib.deflate(@deflate_zstream, FFI::Zlib::Z_SYNC_FLUSH)
       raise "cannot deflate" if result != FFI::Zlib::Z_OK
 
-      out_buf.get_bytes(0, zstream[:total_out])
+      out_buf.get_bytes(0, CHUNK - @deflate_zstream[:avail_out])
     end
   end
 end
