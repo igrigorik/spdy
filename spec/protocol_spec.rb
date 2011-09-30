@@ -34,7 +34,9 @@ describe SPDY::Protocol do
   context "control frames" do
     describe "SYN_STREAM" do
       it "should create a SYN_STREAM packet" do
-        sr = SPDY::Protocol::Control::SynStream.new
+        zlib_session = SPDY::Zlib.new
+
+        sr = SPDY::Protocol::Control::SynStream.new({:zlib_session => zlib_session})
 
         headers = {
           "accept"=>"application/xml", "host"=>"127.0.0.1:9000",
@@ -42,20 +44,22 @@ describe SPDY::Protocol do
           "url"=>"/?echo=a&format=json","version"=>"HTTP/1.1"
         }
 
-        sr.create(:stream_id => 1, :headers => headers)
+        sr.create({:stream_id => 1, :headers => headers})
         sr.header.version.should == 2
         sr.pri.should == 0
 
         sr.header.len.should > 50
         sr.data.should_not be_nil
 
-        st = SPDY::Protocol::Control::SynStream.new
+        st = SPDY::Protocol::Control::SynStream.new({:zlib_session => zlib_session})
         st.parse(sr.to_binary_s)
         st.num_bytes.should == sr.to_binary_s.size
       end
 
       it "should parse SYN_STREAM packet" do
-        sr = SPDY::Protocol::Control::SynStream.new
+        zlib_session = SPDY::Zlib.new
+
+        sr = SPDY::Protocol::Control::SynStream.new({:zlib_session => zlib_session})
         sr.parse(SYN_STREAM)
 
         sr.num_bytes.should == SYN_STREAM.size
@@ -71,10 +75,12 @@ describe SPDY::Protocol do
     describe "SYN_REPLY" do
       describe "creating a packet" do
         before do
-          @sr = SPDY::Protocol::Control::SynReply.new
+          zlib_session = SPDY::Zlib.new
+
+          @sr = SPDY::Protocol::Control::SynReply.new({:zlib_session => zlib_session})
 
           headers = {'Content-Type' => 'text/plain', 'status' => '200 OK', 'version' => 'HTTP/1.1'}
-          @sr.create(:stream_id => 1, :headers => headers)
+          @sr.create({:stream_id => 1, :headers => headers})
         end
 
         describe "common control frame fields" do
@@ -126,7 +132,9 @@ describe SPDY::Protocol do
             @packet[12..13].should == "\x00\x00"
           end
           specify "followed by compressed NV data" do
-            data = SPDY::Zlib.inflate(@packet[14..-1].to_s)
+            zlib_session = SPDY::Zlib.new
+
+            data = zlib_session.inflate(@packet[14..-1].to_s)
             data.should =~ %r{\x00\x0cContent-Type}
           end
         end
@@ -134,7 +142,9 @@ describe SPDY::Protocol do
       end
 
       it "should parse SYN_REPLY packet" do
-        sr = SPDY::Protocol::Control::SynReply.new
+        zlib_session = SPDY::Zlib.new
+
+        sr = SPDY::Protocol::Control::SynReply.new({:zlib_session => zlib_session})
         sr.parse(SYN_REPLY)
 
         sr.header.type.should == 2
@@ -200,9 +210,7 @@ describe SPDY::Protocol do
       describe "the assembled packet" do
         before do
           @settings = SPDY::Protocol::Control::Settings.new
-          @settings.create(
-            :settings_round_trip_time => 300
-          )
+          @settings.create(:settings_round_trip_time => 300)
           @frame = Array(@settings.to_binary_s.bytes)
         end
         specify "starts with a control bit" do
@@ -310,7 +318,9 @@ describe SPDY::Protocol do
 
     describe "HEADERS" do
       it "can parse a HEADERS packet"do
-        headers = SPDY::Protocol::Control::Headers.new
+        zlib_session = SPDY::Zlib.new
+
+        headers = SPDY::Protocol::Control::Headers.new({:zlib_session => zlib_session})
         headers.parse(HEADERS)
 
         headers.header.stream_id.should == 1
@@ -321,10 +331,12 @@ describe SPDY::Protocol do
 
       describe "the assembled packet" do
         before do
-          @headers = SPDY::Protocol::Control::Headers.new
+          zlib_session = SPDY::Zlib.new
+
+          @headers = SPDY::Protocol::Control::Headers.new({:zlib_session => zlib_session})
 
           nv = {'Content-Type' => 'text/plain', 'status' => '200 OK', 'version' => 'HTTP/1.1'}
-          @headers.create(:stream_id => 42, :headers => nv)
+          @headers.create({:stream_id => 42, :headers => nv})
 
           @frame = Array(@headers.to_binary_s.bytes)
         end

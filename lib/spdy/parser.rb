@@ -2,8 +2,11 @@ module SPDY
   class Parser
     include Protocol
 
+    attr :zlib_session
+
     def initialize
       @buffer = ''
+      @zlib_session = Zlib.new
     end
 
     def <<(data)
@@ -30,7 +33,7 @@ module SPDY
 
         headers = {}
         if pckt.data.size > 0
-          data = Zlib.inflate(pckt.data.to_s)
+          data = @zlib_session.inflate(pckt.data.to_s)
           headers = NV.new.read(data).to_h
         end
 
@@ -53,18 +56,20 @@ module SPDY
 
             case pckt.type.to_i
               when 1 then # SYN_STREAM
-                pckt = Control::SynStream.new
+                pckt = Control::SynStream.new({:zlib_session => @zlib_session})
                 unpack_control(pckt, @buffer)
 
+                @on_message_complete.call(pckt.header.stream_id) if @on_message_complete && fin?(pckt.header)
+
               when 2 then # SYN_REPLY
-                pckt = Control::SynReply.new
+                pckt = Control::SynReply.new({:zlib_session => @zlib_session})
                 unpack_control(pckt, @buffer)
+
+                @on_message_complete.call(pckt.header.stream_id) if @on_message_complete && fin?(pckt.header)
 
               else
                 raise 'invalid control frame'
             end
-
-            @on_message_complete.call(pckt.header.stream_id) if @on_message_complete && fin?(pckt.header)
 
           when DATA_BIT
             return if @buffer.size < 8

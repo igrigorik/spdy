@@ -13,11 +13,16 @@ module SPDY
 
     module Control
       module Helpers
+        def initialize_instance
+          super
+          @zlib_session = @params[:zlib_session]
+        end
+
         def parse(chunk)
           head = Control::Header.new.read(chunk)
           self.read(chunk)
 
-          data = Zlib.inflate(self.data.to_s)
+          data = @zlib_session.inflate(self.data.to_s)
           self.uncompressed_data = NV.new.read(data)
           self
         end
@@ -32,7 +37,7 @@ module SPDY
           nv = SPDY::Protocol::NV.new
           nv.create(opts[:headers])
 
-          nv = SPDY::Zlib.deflate(nv.to_binary_s)
+          nv = @zlib_session.deflate(nv.to_binary_s)
           self.header.len = self.header.len.to_i + nv.size
 
           self.data = nv
