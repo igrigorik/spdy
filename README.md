@@ -38,10 +38,6 @@ send_data d.to_binary_s
 
 See example eventmachine server in *examples/spdy_server.rb* for a minimal SPDY "hello world" server.
 
-## Todo:
-
-- reuse zlib context for [duration of session](https://github.com/igrigorik/spdy/issues/2)
-
 ### License
 
 MIT License - Copyright (c) 2011 Ilya Grigorik
