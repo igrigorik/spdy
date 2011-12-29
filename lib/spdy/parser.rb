@@ -18,6 +18,10 @@ module SPDY
       @on_headers_complete = blk
     end
 
+    def on_ping(&blk)
+      @on_ping = blk
+    end
+
     def on_body(&blk)
       @on_body = blk
     end
@@ -66,6 +70,10 @@ module SPDY
                 unpack_control(pckt, @buffer)
 
                 @on_message_complete.call(pckt.header.stream_id) if @on_message_complete && fin?(pckt.header)
+                
+              when 6 then # PING
+                num = @buffer[8,4].unpack('N').first
+                @on_ping.call(num) if @on_ping
 
               else
                 raise 'invalid control frame'
