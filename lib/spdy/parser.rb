@@ -46,6 +46,7 @@ module SPDY
       end
 
       def try_parse
+        return if @buffer.length < 1
         type = @buffer[0,1].unpack('C').first >> 7 & 0x01
         pckt = nil
 
@@ -84,6 +85,9 @@ module SPDY
 
         # remove parsed data from the buffer
         @buffer.slice!(0...pckt.num_bytes)
+        
+        # try parsing another frame
+        try_parse
 
       rescue IOError => e
         # rescue partial parse and wait for more data
