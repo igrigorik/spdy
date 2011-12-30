@@ -68,6 +68,14 @@ describe SPDY::Parser do
       headers.class.should == Hash
       headers['version'].should == "HTTP/1.1"
     end
+    
+    it "should parse PING packet" do
+      fired = false
+      s.on_ping { |num| fired = num }
+      s << PING
+
+      fired.should == 1
+    end
   end
 
   context "DATA" do
