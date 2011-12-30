@@ -44,6 +44,13 @@ describe SPDY::Parser do
     fired.should be_true
   end
 
+  it "should parse multiple frames in a single buffer" do
+    fired = 0
+    s.on_body { |stream_id, d| fired += 1 }
+    s << DATA*2
+    fired.should == 2
+  end
+
   context "CONTROL" do
     it "should parse SYN_STREAM packet" do
       fired = false
