@@ -89,11 +89,6 @@ module SPDY
 
                 @on_stream_reset.call(pckt.stream_id, pckt.status_code) if @on_stream_reset
 
-              when 6 then # PING
-                num = @buffer[8,4].unpack('N').first
-                @on_ping.call(num) if @on_ping
-
-
               else
                 raise 'invalid control frame'
             end
