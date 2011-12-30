@@ -29,6 +29,10 @@ module SPDY
     def on_message_complete(&blk)
       @on_message_complete = blk
     end
+    
+    def on_stream_reset(&blk)
+      @on_stream_reset = blk
+    end
 
     private
 
@@ -77,6 +81,18 @@ module SPDY
                 pckt.read(@buffer)
 
                 @on_ping.call(pckt.ping_id) if @on_ping
+
+              when 3 then # RST_STREAM
+                return if @buffer.size < 16
+                pckt = Control::RstStream.new({:zlib_session => @zlib_session})
+                pckt.read(@buffer)
+
+                @on_stream_reset.call(pckt.stream_id, pckt.status_code) if @on_stream_reset
+
+              when 6 then # PING
+                num = @buffer[8,4].unpack('N').first
+                @on_ping.call(num) if @on_ping
+
 
               else
                 raise 'invalid control frame'
