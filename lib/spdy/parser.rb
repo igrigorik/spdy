@@ -72,8 +72,10 @@ module SPDY
                 @on_message_complete.call(pckt.header.stream_id) if @on_message_complete && fin?(pckt.header)
                 
               when 6 then # PING
-                num = @buffer[8,4].unpack('N').first
-                @on_ping.call(num) if @on_ping
+                pckt = Control::Ping.new({:zlib_session => @zlib_session})
+                pckt.read(@buffer)
+
+                @on_ping.call(pckt.ping_id) if @on_ping
 
               else
                 raise 'invalid control frame'
