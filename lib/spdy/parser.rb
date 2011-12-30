@@ -46,7 +46,7 @@ module SPDY
       end
 
       def try_parse
-        return if @buffer.length < 1
+        return if @buffer.empty?
         type = @buffer[0,1].unpack('C').first >> 7 & 0x01
         pckt = nil
 
