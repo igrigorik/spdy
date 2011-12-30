@@ -9,21 +9,21 @@ describe SPDY::Protocol do
         d = SPDY::Protocol::Data::Frame.new
         d.create(:stream_id => 1, :data => data)
 
-        d.to_binary_s.should == DATA
+        d.to_binary_s.should == DATA.force_encoding('ASCII-8BIT')
       end
 
       it "should create a FIN data frame" do
         d = SPDY::Protocol::Data::Frame.new
         d.create(:stream_id => 1, :flags => 1)
 
-        d.to_binary_s.should == DATA_FIN
+        d.to_binary_s.should == DATA_FIN.force_encoding('ASCII-8BIT')
       end
 
       it "should read a FIN data frame" do
         d = SPDY::Protocol::Data::Frame.new
         d.create(:stream_id => 1, :flags => 1)
 
-        d.to_binary_s.should == DATA_FIN
+        d.to_binary_s.should == DATA_FIN.force_encoding('ASCII-8BIT')
         pckt = SPDY::Protocol::Data::Frame.new.read(d.to_binary_s)
         pckt.flags.should == 1
       end
@@ -62,13 +62,13 @@ describe SPDY::Protocol do
         sr = SPDY::Protocol::Control::SynStream.new({:zlib_session => zlib_session})
         sr.parse(SYN_STREAM)
 
-        sr.num_bytes.should == SYN_STREAM.size
+        sr.num_bytes.should == SYN_STREAM.force_encoding('ASCII-8BIT').size
 
         sr.header.type.should == 1
         sr.uncompressed_data.to_h.class.should == Hash
         sr.uncompressed_data.to_h['method'].should == 'GET'
 
-        sr.to_binary_s.should == SYN_STREAM
+        sr.to_binary_s.should == SYN_STREAM.force_encoding('ASCII-8BIT')
       end
     end
 
@@ -111,7 +111,7 @@ describe SPDY::Protocol do
           end
 
           specify "starts with a control bit" do
-            @packet[0...1].should == "\x80"
+            @packet[0...1].should == "\x80".force_encoding('ASCII-8BIT')
           end
           specify "followed by the version" do
             @packet[1...2].should == "\x02"
@@ -151,7 +151,7 @@ describe SPDY::Protocol do
         sr.uncompressed_data.to_h.class.should == Hash
         sr.uncompressed_data.to_h['status'].should == '200 OK'
 
-        sr.to_binary_s.should == SYN_REPLY
+        sr.to_binary_s.should == SYN_REPLY.force_encoding('ASCII-8BIT')
       end
     end
 
@@ -163,7 +163,7 @@ describe SPDY::Protocol do
         ping.stream_id.should == 1
         ping.type.should == 3
 
-        ping.to_binary_s.should == RST_STREAM
+        ping.to_binary_s.should == RST_STREAM.force_encoding('ASCII-8BIT')
       end
 
       describe "the assembled packet" do
@@ -204,7 +204,7 @@ describe SPDY::Protocol do
         settings.headers[0].id_data.should == SPDY::Protocol::SETTINGS_ROUND_TRIP_TIME
         settings.headers[0].value_data.should == 300
 
-        settings.to_binary_s.should == SETTINGS
+        settings.to_binary_s.should == SETTINGS.force_encoding('ASCII-8BIT')
       end
 
       describe "the assembled packet" do
@@ -251,7 +251,7 @@ describe SPDY::Protocol do
         ping.ping_id.should == 1
         ping.type.should == 6
 
-        ping.to_binary_s.should == PING
+        ping.to_binary_s.should == PING.force_encoding('ASCII-8BIT')
       end
 
       describe "the assembled packet" do
@@ -286,7 +286,7 @@ describe SPDY::Protocol do
         goaway.stream_id.should == 1
         goaway.type.should == 7
 
-        goaway.to_binary_s.should == GOAWAY
+        goaway.to_binary_s.should == GOAWAY.force_encoding('ASCII-8BIT')
       end
 
       describe "the assembled packet" do
@@ -326,7 +326,7 @@ describe SPDY::Protocol do
         headers.header.stream_id.should == 1
         headers.header.type.should == 8
 
-        headers.to_binary_s.should == HEADERS
+        headers.to_binary_s.should == HEADERS.force_encoding('ASCII-8BIT')
       end
 
       describe "the assembled packet" do
