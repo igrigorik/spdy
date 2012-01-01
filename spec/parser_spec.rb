@@ -86,7 +86,7 @@ describe SPDY::Parser do
 
     it "should parse HEADERS packet" do
       fired = false
-      s.on_additional_headers { fired = true }
+      s.on_headers { fired = true }
       s << HEADERS
 
       fired.should be_true
@@ -94,7 +94,7 @@ describe SPDY::Parser do
 
     it "should return parsed headers for HEADERS" do
       sid, headers = nil
-      s.on_additional_headers do |stream, head|
+      s.on_headers do |stream, head|
         sid = stream; headers = head
       end
 

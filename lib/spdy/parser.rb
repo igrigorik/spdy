@@ -18,12 +18,13 @@ module SPDY
       @on_headers_complete = blk
     end
 
+
     def on_ping(&blk)
       @on_ping = blk
     end
 
-    def on_additional_headers(&blk)
-      @on_additional_headers = blk
+    def on_headers(&blk)
+      @on_headers = blk
     end
 
     def on_body(&blk)
@@ -91,7 +92,7 @@ module SPDY
                 pckt = Control::Headers.new({:zlib_session => @zlib_session})
                 pckt.parse(@buffer)
 
-                @on_additional_headers.call(pckt.header.stream_id, pckt.uncompressed_data.to_h) if @on_additional_headers
+                @on_headers.call(pckt.header.stream_id, pckt.uncompressed_data.to_h) if @on_headers
 
               else
                 raise 'invalid control frame'
