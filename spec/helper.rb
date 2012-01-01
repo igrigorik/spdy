@@ -1,3 +1,5 @@
+# -*- coding: ascii-8bit -*-
+
 require 'rspec'
 require 'spdy'
 
