@@ -54,7 +54,6 @@ describe SPDY::Parser do
 
   it "should return the parsed packets" do
     packets = (s << (SYN_REPLY+DATA))
-
     packets.length.should == 2
 
     packets[0].class.should == SPDY::Protocol::Control::SynReply
