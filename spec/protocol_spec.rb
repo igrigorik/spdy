@@ -1,3 +1,5 @@
+# -*- coding: ascii-8bit -*-
+
 require 'helper'
 
 describe SPDY::Protocol do
