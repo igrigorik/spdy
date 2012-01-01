@@ -89,9 +89,10 @@ module SPDY
 
         # remove parsed data from the buffer
         @buffer.slice!(0...pckt.num_bytes)
-        
+ 
         # try parsing another frame
-        try_parse
+        another_packet = try_parse || [nil]
+        ([pckt] + another_packet).compact
 
       rescue IOError => e
         # rescue partial parse and wait for more data
