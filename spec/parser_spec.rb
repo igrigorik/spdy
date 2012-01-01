@@ -95,6 +95,17 @@ describe SPDY::Parser do
       data.should == 'This is SPDY.'
     end
   end
+  
+  context "RST_STREAM" do
+    it "should parse RST_STREAM packet" do
+      stream, status = nil
+      s.on_reset { |stream_id, s| stream, status = stream_id, s }
+      s << RST_STREAM
+
+      stream.should == 1
+      status.should == 1
+    end
+  end
 
   context "FIN" do
     it "should invoke message_complete on FIN flag in CONTROL packet" do
