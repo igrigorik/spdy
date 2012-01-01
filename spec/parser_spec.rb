@@ -60,7 +60,7 @@ describe SPDY::Parser do
       fired.should be_true
     end
 
-    it "should return parsed headers" do
+    it "should return parsed headers for SYN_STREAM" do
       sid, asid, pri, headers = nil
       s.on_headers_complete do |stream, astream, priority, head|
         sid = stream; asid = astream; pri = priority; headers = head
@@ -82,6 +82,28 @@ describe SPDY::Parser do
       s << PING
 
       fired.should == 1
+    end
+
+    it "should parse HEADERS packet" do
+      fired = false
+      s.on_additional_headers { fired = true }
+      s << HEADERS
+
+      fired.should be_true
+    end
+
+    it "should return parsed headers for HEADERS" do
+      sid, headers = nil
+      s.on_additional_headers do |stream, head|
+        sid = stream; headers = head
+      end
+
+      s << HEADERS
+
+      sid.should == 1
+
+      headers.class.should == Hash
+      headers['version'].should == "HTTP/1.1"
     end
   end
 
