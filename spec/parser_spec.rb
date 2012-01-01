@@ -99,7 +99,7 @@ describe SPDY::Parser do
   context "RST_STREAM" do
     it "should parse RST_STREAM packet" do
       stream, status = nil
-      s.on_stream_reset { |stream_id, s| stream, status = stream_id, s }
+      s.on_reset { |stream_id, s| stream, status = stream_id, s }
       s << RST_STREAM
 
       stream.should == 1

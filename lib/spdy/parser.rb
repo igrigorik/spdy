@@ -30,8 +30,8 @@ module SPDY
       @on_message_complete = blk
     end
     
-    def on_stream_reset(&blk)
-      @on_stream_reset = blk
+    def on_reset(&blk)
+      @on_reset = blk
     end
 
     private
@@ -87,7 +87,7 @@ module SPDY
                 pckt = Control::RstStream.new({:zlib_session => @zlib_session})
                 pckt.read(@buffer)
 
-                @on_stream_reset.call(pckt.stream_id, pckt.status_code) if @on_stream_reset
+                @on_reset.call(pckt.stream_id, pckt.status_code) if @on_reset
 
               else
                 raise 'invalid control frame'
