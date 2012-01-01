@@ -44,11 +44,23 @@ describe SPDY::Parser do
     fired.should be_true
   end
 
+
   it "should parse multiple frames in a single buffer" do
     fired = 0
     s.on_body { |stream_id, d| fired += 1 }
     s << DATA*2
     fired.should == 2
+  end
+
+  it "should return the parsed packets" do
+    packets = (s << (SYN_REPLY+DATA))
+    packets.length.should == 2
+
+    packets[0].class.should == SPDY::Protocol::Control::SynReply
+    packets[0].uncompressed_data.to_h['status'].should == '200 OK'
+    
+    packets[1].class.should == SPDY::Protocol::Data::Frame
+    packets[1].data.should == 'This is SPDY.'
   end
 
   context "CONTROL" do
