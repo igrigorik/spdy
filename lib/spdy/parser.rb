@@ -43,9 +43,10 @@ module SPDY
       def unpack_control(pckt, data)
         pckt.parse(data)
         
-        if @on_headers && pckt.uncompressed_data.to_h != {}
+        headers = pckt.uncompressed_data.to_h
+        if @on_headers && !headers.empty?
           @on_headers.call(pckt.header.stream_id.to_i,
-                          pckt.uncompressed_data.to_h)
+                          headers)
         end
       end
 
