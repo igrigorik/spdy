@@ -14,10 +14,9 @@ module SPDY
       try_parse
     end
 
-    def on_headers_complete(&blk)
-      @on_headers_complete = blk
+    def on_open(&blk)
+      @on_open = blk
     end
-
 
     def on_ping(&blk)
       @on_ping = blk
@@ -43,12 +42,10 @@ module SPDY
 
       def unpack_control(pckt, data)
         pckt.parse(data)
-
-        if @on_headers_complete
-          @on_headers_complete.call(pckt.header.stream_id.to_i,
-                                    (pckt.associated_to_stream_id.to_i rescue nil),
-                                    (pckt.pri.to_i rescue nil),
-                                    pckt.uncompressed_data.to_h)
+        
+        if @on_headers && pckt.uncompressed_data.to_h != {}
+          @on_headers.call(pckt.header.stream_id.to_i,
+                          pckt.uncompressed_data.to_h)
         end
       end
 
@@ -65,8 +62,13 @@ module SPDY
             case pckt.type.to_i
               when 1 then # SYN_STREAM
                 pckt = Control::SynStream.new({:zlib_session => @zlib_session})
+                if @on_open
+                  @on_open.call(pckt.header.stream_id,
+                                (pckt.associated_to_stream_id.to_i rescue nil),
+                                (pckt.pri.to_i rescue nil))
+                end
                 unpack_control(pckt, @buffer)
-
+                
                 @on_message_complete.call(pckt.header.stream_id) if @on_message_complete && fin?(pckt.header)
 
               when 2 then # SYN_REPLY
