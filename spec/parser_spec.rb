@@ -82,6 +82,28 @@ describe SPDY::Parser do
       headers['version'].should == "HTTP/1.1"
     end
     
+    it "should not fire the on_open callback for SYN_REPLY" do
+      failed = false
+      s.on_open { failed = true }
+      s << SYN_REPLY
+
+      failed.should be_false
+    end
+    
+    it "should return parsed headers for SYN_REPLY" do
+      sid, headers = nil
+      s.on_headers do |stream, head|
+        sid = stream;  headers = head
+      end
+
+      s << SYN_REPLY
+
+      sid.should == 1
+      
+      headers.class.should == Hash
+      headers['version'].should == "HTTP/1.1"
+    end
+    
     it "should parse PING packet" do
       fired = false
       s.on_ping { |num| fired = num }
