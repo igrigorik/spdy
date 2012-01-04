@@ -64,14 +64,18 @@ describe SPDY::Parser do
       sid, sid2, asid, pri, headers = nil
       order = []
       s.on_open do |stream, astream, priority|
+        order << :open
         sid = stream; asid = astream; pri = priority;
       end
       
       s.on_headers do |stream, head|
+        order << :headers
         sid2 = stream;  headers = head
       end
 
       s << SYN_STREAM
+
+      order.should == [:open, :headers]
 
       sid.should == 1
       sid2.should == 1
