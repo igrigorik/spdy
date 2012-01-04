@@ -37,19 +37,13 @@ module SPDY
     private
 
       def unpack_control(pckt, data)
-        pckt.read(data)
-
-        headers = {}
-        if pckt.data.size > 0
-          data = @zlib_session.inflate(pckt.data.to_s)
-          headers = NV.new.read(data).to_h
-        end
+        pckt.parse(data)
 
         if @on_headers_complete
           @on_headers_complete.call(pckt.header.stream_id.to_i,
                                     (pckt.associated_to_stream_id.to_i rescue nil),
                                     (pckt.pri.to_i rescue nil),
-                                    headers)
+                                    pckt.uncompressed_data.to_h)
         end
       end
 
