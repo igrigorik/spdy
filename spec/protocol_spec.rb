@@ -72,6 +72,21 @@ describe SPDY::Protocol do
 
         sr.to_binary_s.should == SYN_STREAM
       end
+      
+      it "should parse a SYN_STREAM without headers" do
+        zlib_session = SPDY::Zlib.new
+        
+        src = SPDY::Protocol::Control::SynStream.new
+        src.header.stream_id = 3
+        src.header.type  = 1
+        src.header.flags = 0x01
+        src.header.len = 10
+        
+        packet = SPDY::Protocol::Control::SynStream.new({:zlib_session => zlib_session})
+        packet.parse(src.to_binary_s)
+        
+        packet.uncompressed_data.to_h.should == {}
+      end
     end
 
     describe "SYN_REPLY" do

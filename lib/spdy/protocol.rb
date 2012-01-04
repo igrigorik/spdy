@@ -21,9 +21,14 @@ module SPDY
         def parse(chunk)
           head = Control::Header.new.read(chunk)
           self.read(chunk)
-
-          data = @zlib_session.inflate(self.data.to_s)
-          self.uncompressed_data = NV.new.read(data)
+          
+          if data.length > 0
+            data = @zlib_session.inflate(self.data.to_s)
+            self.uncompressed_data = NV.new.read(data)
+          else
+            self.uncompressed_data = NV.new
+          end
+          
           self
         end
 
