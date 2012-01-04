@@ -6,7 +6,7 @@ describe SPDY::Parser do
   context "callbacks" do
     it "should accept header callback" do
       lambda do
-        s.on_headers_complete {}
+        s.on_headers {}
       end.should_not raise_error
     end
 
@@ -38,7 +38,7 @@ describe SPDY::Parser do
     data.should == 'This is SPDY.'
 
     fired = false
-    s.on_headers_complete { fired = true }
+    s.on_open { fired = true }
     s << SYN_STREAM
 
     fired.should be_true
@@ -54,24 +54,56 @@ describe SPDY::Parser do
   context "CONTROL" do
     it "should parse SYN_STREAM packet" do
       fired = false
-      s.on_headers_complete { fired = true }
+      s.on_open { fired = true }
       s << SYN_STREAM
 
       fired.should be_true
     end
 
-    it "should return parsed headers" do
-      sid, asid, pri, headers = nil
-      s.on_headers_complete do |stream, astream, priority, head|
-        sid = stream; asid = astream; pri = priority; headers = head
+    it "should return parsed headers for SYN_STREAM" do
+      sid, sid2, asid, pri, headers = nil
+      order = []
+      s.on_open do |stream, astream, priority|
+        order << :open
+        sid = stream; asid = astream; pri = priority;
+      end
+      
+      s.on_headers do |stream, head|
+        order << :headers
+        sid2 = stream;  headers = head
       end
 
       s << SYN_STREAM
 
+      order.should == [:open, :headers]
+
       sid.should == 1
+      sid2.should == 1
       asid.should == 0
       pri.should == 0
 
+      headers.class.should == Hash
+      headers['version'].should == "HTTP/1.1"
+    end
+    
+    it "should not fire the on_open callback for SYN_REPLY" do
+      failed = false
+      s.on_open { failed = true }
+      s << SYN_REPLY
+
+      failed.should be_false
+    end
+    
+    it "should return parsed headers for SYN_REPLY" do
+      sid, headers = nil
+      s.on_headers do |stream, head|
+        sid = stream;  headers = head
+      end
+
+      s << SYN_REPLY
+
+      sid.should == 1
+      
       headers.class.should == Hash
       headers['version'].should == "HTTP/1.1"
     end
@@ -82,6 +114,28 @@ describe SPDY::Parser do
       s << PING
 
       fired.should == 1
+    end
+
+    it "should parse HEADERS packet" do
+      fired = false
+      s.on_headers { fired = true }
+      s << HEADERS
+
+      fired.should be_true
+    end
+
+    it "should return parsed headers for HEADERS" do
+      sid, headers = nil
+      s.on_headers do |stream, head|
+        sid = stream; headers = head
+      end
+
+      s << HEADERS
+
+      sid.should == 1
+
+      headers.class.should == Hash
+      headers['version'].should == "HTTP/1.1"
     end
   end
 
@@ -110,7 +164,7 @@ describe SPDY::Parser do
   context "FIN" do
     it "should invoke message_complete on FIN flag in CONTROL packet" do
       f1, f2 = false
-      s.on_headers_complete { f1 = true }
+      s.on_open { f1 = true }
       s.on_message_complete { |s| f2 = s }
 
       sr = SPDY::Protocol::Control::SynStream.new
