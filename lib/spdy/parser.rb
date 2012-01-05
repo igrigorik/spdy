@@ -40,9 +40,7 @@ module SPDY
 
     private
 
-      def unpack_control(pckt, data)
-        pckt.parse(data)
-        
+      def handle_headers(pckt)
         headers = pckt.uncompressed_data.to_h
         if @on_headers && !headers.empty?
           @on_headers.call(pckt.header.stream_id.to_i,
@@ -63,18 +61,21 @@ module SPDY
             case pckt.type.to_i
               when 1 then # SYN_STREAM
                 pckt = Control::SynStream.new({:zlib_session => @zlib_session})
+                pckt.parse(@buffer)
+                
                 if @on_open
-                  @on_open.call(pckt.header.stream_id,
+                  @on_open.call(pckt.header.stream_id.to_i,
                                 (pckt.associated_to_stream_id.to_i rescue nil),
                                 (pckt.pri.to_i rescue nil))
                 end
-                unpack_control(pckt, @buffer)
+                handle_headers(pckt)
                 
                 @on_message_complete.call(pckt.header.stream_id) if @on_message_complete && fin?(pckt.header)
 
               when 2 then # SYN_REPLY
                 pckt = Control::SynReply.new({:zlib_session => @zlib_session})
-                unpack_control(pckt, @buffer)
+                pckt.parse(@buffer)
+                handle_headers(pckt)
 
                 @on_message_complete.call(pckt.header.stream_id) if @on_message_complete && fin?(pckt.header)
                 

@@ -76,7 +76,8 @@ describe SPDY::Parser do
       s << SYN_STREAM
 
       order.should == [:open, :headers]
-
+      
+      sid.class.should == Fixnum
       sid.should == 1
       sid2.should == 1
       asid.should == 0
