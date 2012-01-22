@@ -193,4 +193,29 @@ describe SPDY::Parser do
 
   end
 
+  context "#reset!" do
+    # because the zlib session is stateful
+    it "should raise when trying to inflate the same thing twice" do
+      s << SYN_STREAM
+      lambda {
+        s << SYN_STREAM
+      }.should raise_error
+    end
+
+    it "should not raise when resetting the parser after each frame" do
+      s << SYN_STREAM
+      s.reset!
+      lambda {
+        s << SYN_STREAM
+      }.should_not raise_error
+    end
+
+    it "should clear the buffer" do
+      s << SYN_STREAM[0..30]
+      s.reset!
+      lambda {
+        s << SYN_STREAM
+      }.should_not raise_error
+    end
+  end
 end

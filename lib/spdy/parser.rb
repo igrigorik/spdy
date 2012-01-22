@@ -38,6 +38,11 @@ module SPDY
       @on_reset = blk
     end
 
+    def reset!
+      @buffer = ''
+      @zlib_session.reset
+    end
+
     private
 
       def handle_headers(pckt)
