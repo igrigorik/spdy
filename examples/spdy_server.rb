@@ -6,7 +6,7 @@ require 'spdy'
 class SPDYHandler < EM::Connection
   def post_init
     @parser = SPDY::Parser.new
-    @parser.on_headers_complete do |stream_id, associated_stream, priority, headers|
+    @parser.on_headers do |stream_id, associated_stream, priority, headers|
       p [:SPDY_HEADERS, headers]
 
       sr = SPDY::Protocol::Control::SynReply.new({:zlib_session => @parser.zlib_session})
