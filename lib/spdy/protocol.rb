@@ -21,14 +21,14 @@ module SPDY
         def parse(chunk)
           head = Control::Header.new.read(chunk)
           self.read(chunk)
-          
+
           if data.length > 0
             data = @zlib_session.inflate(self.data.to_s)
             self.uncompressed_data = NV.new.read(data)
           else
             self.uncompressed_data = NV.new
           end
-          
+
           self
         end
 
@@ -251,7 +251,7 @@ module SPDY
 
       def create(opts = {})
         opts.each do |k, v|
-          self.headers << {:name_len => k.size, :name_data => k, :value_len => v.size, :value_data => v}
+          self.headers << {:name_len => k.size, :name_data => k.downcase, :value_len => v.size, :value_data => v}
         end
 
         self.pairs = opts.size
