@@ -1,20 +1,20 @@
-# SPDY: An experimental protocol for a faster web
+# SPDY
 
-SPDY was developed at Google as part of the "let's make the web faster" initiative. SPDY ("SPeeDY") is an application-layer protocol for transporting content over the web, designed specifically for minimal latency. In lab tests, SPDY shows 64% reduction in page load times! For more details, check out the [official site](https://sites.google.com/a/chromium.org/dev/spdy).
+SPDY is an experimental protocol designed to reduce latency of web pages. The SPDY v2 draft is the foundation for the HTTP 2.0 initiative led by the HTTPbis working group. In lab tests, SPDY shows 64% reduction in page load times! For more details, check out the [official site](https://sites.google.com/a/chromium.org/dev/spdy).
 
-Today, SPDY is built into Chrome + Google web-server infrastructure and is currently serving over 90% of all the SSL traffic. Yes, you read that right.. If you're using Chrome, and you're using Google products, chances are, you are fetching the content from Google servers over SPDY, not HTTP.
+Today, SPDY support is available in Chrome, Firefox, and Opera on the client, and on Apache, Nginx, Jetty, node.js and others on the server. All of Google web services, when running over SSL, are available through SPDY! In other words, if you are using Google products over SSL, chances are, you are fetching the content from Google servers over SPDY, not HTTP.
 
+* [HTTPBis / HTTP 2.0 Charter][http://datatracker.ietf.org/wg/httpbis/charter/]
 * [Life beyond HTTP 1.1: Google's SPDY](http://www.igvita.com/2011/04/07/life-beyond-http-11-googles-spdy)
-* [How to set up ruby, eventmachine and spdy to use NPN](https://gist.github.com/944386)
 
 ## Protocol Parser
 
-SPDY specification (Draft 2) defines its own framing and message exchange protocol which is layered on top of a raw TCP/SSL connection. This gem implements a basic, pure Ruby parser for the SPDY protocol:
+SPDY specification (draft 2) defines its own framing and message exchange protocol which is layered on top of a raw TCP connection. This gem implements a basic, pure Ruby parser for the SPDY v2 protocol:
 
 ```ruby
 s = SPDY::Parser.new
 
-s.on_headers_complete { |stream_id, associated_stream, priority, headers| ... }
+s.on_headers_complete { |stream_id, headers| ... }
 s.on_body             { |stream_id, data| ... }
 s.on_message_complete { |stream_id| ... }
 
