@@ -72,19 +72,19 @@ describe SPDY::Protocol do
 
         sr.to_binary_s.should == SYN_STREAM
       end
-      
+
       it "should parse a SYN_STREAM without headers" do
         zlib_session = SPDY::Zlib.new
-        
+
         src = SPDY::Protocol::Control::SynStream.new
         src.header.stream_id = 3
         src.header.type  = 1
         src.header.flags = 0x01
         src.header.len = 10
-        
+
         packet = SPDY::Protocol::Control::SynStream.new({:zlib_session => zlib_session})
         packet.parse(src.to_binary_s)
-        
+
         packet.uncompressed_data.to_h.should == {}
       end
     end
@@ -119,7 +119,7 @@ describe SPDY::Protocol do
           it "has data" do
             @sr.data.should_not be_nil
           end
-          specify { @sr.header.len.should > 50 }
+          specify { @sr.header.len.should > 45 }
         end
 
         describe "assembled packet" do
@@ -140,7 +140,7 @@ describe SPDY::Protocol do
             @packet[4...5].should == "\x00"
           end
           specify "followed by the length" do
-            @packet[5..7].should == "\x00\x005"
+            @packet[5..7].should == "\x00\x000"
           end
           specify "followed by the stream ID" do
             @packet[8..11].should == "\x00\x00\x00\x01"
@@ -152,7 +152,7 @@ describe SPDY::Protocol do
             zlib_session = SPDY::Zlib.new
 
             data = zlib_session.inflate(@packet[14..-1].to_s)
-            data.should =~ %r{\x00\x0cContent-Type}
+            data.should =~ %r{\x00\x0ccontent-type}
           end
         end
 
@@ -373,7 +373,7 @@ describe SPDY::Protocol do
           # 4 bytes (stream ID)
           # 2 bytes (unused)
           # N bytes for compressed NV section
-          @frame[5..7].should == [0,0,53]
+          @frame[5..7].should == [0,0,48]
         end
         specify "followed by the stream ID (1 ignored bit + 31 bits)" do
           @frame[8..11].should == [0,0,0,42]
@@ -382,7 +382,7 @@ describe SPDY::Protocol do
           @frame[12..13].should == [0,0]
         end
         specify "followed by name/value pairs" do
-          @frame[14..-1].size.should == 47
+          @frame[14..-1].size.should == 42
         end
       end
     end
@@ -403,7 +403,7 @@ describe SPDY::Protocol do
         end
 
         it "prefaces names with the length of the name" do
-          @binary_string.should =~ %r{\x00\x0cContent-Type}
+          @binary_string.should =~ %r{\x00\x0ccontent-type}
         end
         it "prefaces values with the length of the value" do
           @binary_string.should =~ %r{\x00\x08HTTP/1.1}
