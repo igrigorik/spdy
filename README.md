@@ -4,7 +4,7 @@ SPDY is an experimental protocol designed to reduce latency of web pages. The SP
 
 Today, SPDY support is available in Chrome, Firefox, and Opera on the client, and on Apache, Nginx, Jetty, node.js and others on the server. All of Google web services, when running over SSL, are available through SPDY! In other words, if you are using Google products over SSL, chances are, you are fetching the content from Google servers over SPDY, not HTTP.
 
-* [HTTPBis / HTTP 2.0 Charter][http://datatracker.ietf.org/wg/httpbis/charter/]
+* [HTTPBis - HTTP 2.0 Charter](http://datatracker.ietf.org/wg/httpbis/charter/)
 * [Life beyond HTTP 1.1: Google's SPDY](http://www.igvita.com/2011/04/07/life-beyond-http-11-googles-spdy)
 
 ## Protocol Parser
