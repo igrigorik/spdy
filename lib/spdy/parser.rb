@@ -26,6 +26,10 @@ module SPDY
       @on_headers = blk
     end
 
+    def on_settings(&blk)
+      @on_settings = blk
+    end
+
     def on_body(&blk)
       @on_body = blk
     end
@@ -33,7 +37,7 @@ module SPDY
     def on_message_complete(&blk)
       @on_message_complete = blk
     end
-    
+
     def on_reset(&blk)
       @on_reset = blk
     end
@@ -62,14 +66,14 @@ module SPDY
               when 1 then # SYN_STREAM
                 pckt = Control::SynStream.new({:zlib_session => @zlib_session})
                 pckt.parse(@buffer)
-                
+
                 if @on_open
                   @on_open.call(pckt.header.stream_id.to_i,
                                 (pckt.associated_to_stream_id.to_i rescue nil),
                                 (pckt.pri.to_i rescue nil))
                 end
                 handle_headers(pckt)
-                
+
                 @on_message_complete.call(pckt.header.stream_id) if @on_message_complete && fin?(pckt.header)
 
               when 2 then # SYN_REPLY
@@ -78,12 +82,6 @@ module SPDY
                 handle_headers(pckt)
 
                 @on_message_complete.call(pckt.header.stream_id) if @on_message_complete && fin?(pckt.header)
-                
-              when 6 then # PING
-                pckt = Control::Ping.new({:zlib_session => @zlib_session})
-                pckt.read(@buffer)
-
-                @on_ping.call(pckt.ping_id) if @on_ping
 
               when 3 then # RST_STREAM
                 return if @buffer.size < 16
@@ -92,6 +90,21 @@ module SPDY
 
                 @on_reset.call(pckt.stream_id, pckt.status_code) if @on_reset
 
+              when 4 then # SETTINGS
+                return if @buffer.size < 16
+                pckt = Control::Settings.new({:zlib_session => @zlib_session})
+                pckt.read(@buffer)
+
+                @on_settings.call(pckt.stream_id, pckt.status_code) if @on_settings
+
+              when 6 then # PING
+                pckt = Control::Ping.new({:zlib_session => @zlib_session})
+                pckt.read(@buffer)
+
+                @on_ping.call(pckt.ping_id) if @on_ping
+
+
+
               when 8 then # HEADERS
                 pckt = Control::Headers.new({:zlib_session => @zlib_session})
                 pckt.parse(@buffer)
@@ -99,7 +112,7 @@ module SPDY
                 @on_headers.call(pckt.header.stream_id, pckt.uncompressed_data.to_h) if @on_headers
 
               else
-                raise 'invalid control frame'
+                raise "invalid control frame: #{pckt.type}"
             end
 
           when DATA_BIT
@@ -115,7 +128,7 @@ module SPDY
 
         # remove parsed data from the buffer
         @buffer.slice!(0...pckt.num_bytes)
-        
+
         # try parsing another frame
         try_parse
 
