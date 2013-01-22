@@ -138,6 +138,14 @@ describe SPDY::Parser do
       headers.class.should == Hash
       headers['version'].should == "HTTP/1.1"
     end
+
+    it "should parse SETTINGS packet" do
+      fired = false
+      s.on_settings { fired = true }
+      s << SETTINGS
+
+      fired.should be_true
+    end
   end
 
   context "DATA" do

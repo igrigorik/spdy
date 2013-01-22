@@ -95,7 +95,7 @@ module SPDY
                 pckt = Control::Settings.new({:zlib_session => @zlib_session})
                 pckt.read(@buffer)
 
-                @on_settings.call(pckt.stream_id, pckt.status_code) if @on_settings
+                @on_settings.call(pckt.flags, pckt.headers) if @on_settings
 
               when 6 then # PING
                 pckt = Control::Ping.new({:zlib_session => @zlib_session})
