@@ -46,9 +46,10 @@ describe SPDY::Protocol do
           "url"=>"/?echo=a&format=json","version"=>"HTTP/1.1"
         }
 
-        sr.create({:stream_id => 1, :headers => headers})
+        sr.create({:stream_id => 1, :headers => headers, :associated_to_stream_id => 2})
         sr.header.version.should == 2
         sr.pri.should == 0
+        sr.associated_to_stream_id.should == 2
 
         sr.header.len.should > 50
         sr.data.should_not be_nil
