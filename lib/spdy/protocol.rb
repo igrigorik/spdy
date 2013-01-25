@@ -39,6 +39,10 @@ module SPDY
           self.header.flags   = opts[:flags] || 0
           self.header.stream_id = opts[:stream_id]
 
+          if defined?(self.associated_to_stream_id)
+            self.associated_to_stream_id = opts[:associated_to_stream_id]
+          end
+
           nv = SPDY::Protocol::NV.new
           nv.create(opts[:headers])
 
@@ -83,9 +87,6 @@ module SPDY
 
         def create(opts = {})
           build({:type => 1, :len => 10}.merge(opts))
-          if opts[:associated_to_stream_id]
-            self.associated_to_stream_id = opts[:associated_to_stream_id]
-          end
         end
       end
 
