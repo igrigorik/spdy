@@ -83,6 +83,9 @@ module SPDY
 
         def create(opts = {})
           build({:type => 1, :len => 10}.merge(opts))
+          if opts[:associated_to_stream_id]
+            self.associated_to_stream_id = opts[:associated_to_stream_id]
+          end
         end
       end
 
